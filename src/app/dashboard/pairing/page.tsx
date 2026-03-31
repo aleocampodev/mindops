@@ -1,11 +1,12 @@
 import { createClient } from '@/utils/supabase/server';
 import { generatePairingCode } from './actions';
-import { Heart, RefreshCw, Smartphone, ShieldCheck, CheckCircle, Send, BrainCircuit, Zap, Shield, Activity } from 'lucide-react';
+import { RefreshCw, Smartphone, ShieldCheck, CheckCircle, Send, BrainCircuit, Zap, Shield, Activity } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { RealtimeRedirect } from '@/components/auth/RealtimeRedirect';
 
 import { PairingTimer } from '@/components/dashboard/PairingTimer';
+import { LanguageSwitcher } from '@/components/dashboard/LanguageSwitcher';
 import {
   getUserDisplayName,
   generatePairingCodeData,
@@ -45,6 +46,11 @@ export default async function PairingPage() {
     return (
       <main className="min-h-screen bg-slate-950 text-white selection:bg-emerald-500/30">
         <RealtimeRedirect userId={user.id} />
+
+        {/* Language switcher — top right overlay */}
+        <div className="fixed top-4 right-4 z-50 [&_div]:text-white [&_span]:text-white/50 [&_button]:text-white/50 hover:[&_button]:text-white [&_.bg-slate-100]:bg-white/10 [&_.bg-white]:bg-white/20">
+          <LanguageSwitcher />
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 min-h-screen">
           {/* Left — Brand panel */}
@@ -144,6 +150,11 @@ export default async function PairingPage() {
     <main className="min-h-screen bg-slate-950 text-white selection:bg-indigo-500/30">
       <RealtimeRedirect userId={user.id} />
 
+      {/* Language switcher — top right overlay */}
+      <div className="fixed top-4 right-4 z-50 [&_div]:text-white [&_span]:text-white/50 [&_button]:text-white/50 hover:[&_button]:text-white [&_.bg-slate-100]:bg-white/10 [&_.bg-white]:bg-white/20">
+        <LanguageSwitcher />
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 min-h-screen">
         {/* Left — Brand panel */}
         <div className="hidden lg:flex flex-col justify-between p-12 bg-gradient-to-br from-indigo-950 via-slate-950 to-slate-950 relative overflow-hidden">
@@ -239,7 +250,7 @@ export default async function PairingPage() {
               <div className="space-y-6">
                 <PairingTimer expiresAt={pairingData.expiresAt} />
 
-                <form action={async (formData: FormData) => {
+                <form action={async () => {
                   'use server';
                   await generatePairingCode();
                 }} className="flex justify-center">
