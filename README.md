@@ -54,14 +54,12 @@ The infrastructure includes a specialized **Global Error Handler** (SW-ERR) usin
 
 #### 🔄 Orchestration Modules (n8n)
 
+MindOps has been heavily optimized to eliminate N+1 latency issues via a pattern we call **Context Injection Gateway**.
 
-- **MindOps Orchestrator**: The central nervous system coordinating data flow.
-- **Middleware (SW-0)**: Global context enricher (user profile, language, state).
-- **Identity & Onboarding (SW-1)**: Manages user lifecycle and state initialization.
-- **Cognitive Engine (SW-2)**: Processes raw input into actionable mental patterns using RAG memory.
-- **Mission Control (SW-3)**: Handles task prioritization and "Atomic Actions."
-- **Message Telegram (SW-5)**: Centralized messaging utility executing direct **HTTP requests against the Telegram API** for advanced payload customization and robust error handling.
-- **Safety Net Protocol (Twilio)**: Redundancy voice-alert layer for cognitive paralysis.
+- **Middleware (SW-0)**: Global context enricher. On every webhook, it executes a single, ultra-fast Supabase RPC (`get_bot_context`) to instantly hydrate the user's profile, linked language, LLM prompts, and all dynamic UI translations into memory.
+- **Cognitive Engine (SW-1)**: The consolidated logic hub. Downstream agent logic reads directly from the SW-0 injected Memory payload (`$json.context`) to process user "vents", plan missions, and send telegram messages without making redundant database fetching calls.
+
+*(For detailed architectural breakdown of this optimization, see our [Latency Optimization Post-Mortem](docs/LATENCY_OPTIMIZATION.md))*
 
 ## 🌍 Globalization & State Synchronization (i18n)
 
@@ -104,6 +102,16 @@ Additionally, the project adheres to:
 ### Why Google Cloud Run? & Future Scalability
 
 Unlike standard edge deployments, MindOps utilizes GCP Cloud Run to ensure full control over the container runtime, predictable scaling for data-heavy background processing, and seamless, long-running integration with complex backend n8n automation logic.
+
+#### GCP Production Environment Secrets (n8n)
+To guarantee low latency and prevent cold-start delays within n8n, the Cloud Run instance is strictly configured with the following critical runtime variables (mapped via standard GCP Secrets or `n8n/service.yaml`):
+
+| Variable | Value | Architectural Purpose |
+| :--- | :--- | :--- |
+| `N8N_EXECUTIONS_PROCESS` | `main` | **Crucial:** Forces n8n to execute sub-workflows within the main Node thread. Completely eliminates multi-second spin-up latency per webhook. |
+| `EXECUTIONS_DATA_SAVE_*` | `none`/`false` | Strict memory hygiene; prevents database bloat by not storing successful execution histories. |
+| `N8N_PUSH_BACKEND` | `websocket` | Maintains low-latency persistent connections for the UI dash. |
+| `DB_POSTGRESDB_*` | `[...]` | Bypasses local n8n SQLite in favor of the managed Supabase PostgreSQL cluster with a connection pooler limit (`POOLSIZE_MAX=5`). |
 
 **Evolution Path (Queues & Workers):** The architecture is deliberately separated into isolated services. This makes it trivial to upgrade the communication layer from synchronous HTTP webhooks to an asynchronous **Message Queue** (like Google Cloud Pub/Sub or BullMQ). By introducing dedicated **Worker instances** for heavy AI parsing and RAG retrieval, the system can scale horizontally and handle thousands of concurrent "vent" events without bottlenecking the main orchestration engine.
 
