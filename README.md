@@ -1,6 +1,6 @@
 # 🧠 MindOps Web
 
-![MindOps Hero](file:///home/ale/.gemini/antigravity/brain/9745341a-1710-4587-96a6-1e039c1dcc08/mindops_hero_illustration_1774561608338.png)
+![MindOps Dashboard](public/assets/hero-dashboard.png)
 
 MindOps is a **Mental Engineering** platform designed to act as an external cognitive processor. It translates unstructured mental noise into deterministic, structured action plans, effectively managing a user's "Cognitive RAM" to maintain peak execution momentum.
 
@@ -56,6 +56,8 @@ The infrastructure includes a specialized **Global Error Handler** (SW-ERR) usin
 
 MindOps has been heavily optimized to eliminate N+1 latency issues via a pattern we call **Context Injection Gateway**.
 
+![n8n Main Orchestrator Architecture](public/assets/orchestrator.png)
+
 - **Middleware (SW-0)**: Global context enricher. On every webhook, it executes a single, ultra-fast Supabase RPC (`get_bot_context`) to instantly hydrate the user's profile, linked language, LLM prompts, and all dynamic UI translations into memory.
 - **Cognitive Engine (SW-1)**: The consolidated logic hub. Downstream agent logic reads directly from the SW-0 injected Memory payload (`$json.context`) to process user "vents", plan missions, and send telegram messages without making redundant database fetching calls.
 
@@ -92,28 +94,32 @@ Additionally, the project adheres to:
 - **AI Orchestration:** [n8n](https://n8n.io/) (Workflow Automation) + LLMs
 - **Communications:** Telegram API (Input) + [Twilio](https://www.twilio.com/) (Voice Alerts Redundancy)
 - **UI & Analytics Dashboard:** [Tailwind CSS v4](https://tailwindcss.com/), [Framer Motion](https://www.framer.com/motion/), & [Tremor](https://www.tremor.so/).
-- **Infrastructure & Containerization:** [Google Cloud Run](https://cloud.google.com/run) host. Includes portable IaC definitions:
+- **Infrastructure:** [Google Compute Engine (e2-micro)](https://cloud.google.com/compute) host. Leverages the GCP Free Tier with Swap memory, providing a dedicated, always-on runtime without cold starts.
     - `n8n/Dockerfile`: Isolated n8n runtime configuration.
-    - `n8n/service.yaml`: Multi-service Cloud Run orchestration template.
     - `n8n/.env.example`: Standardized environment variable schema.
 
 ## ⚙️ Development & Local Setup
 
-### Why Google Cloud Run? & Future Scalability
+### 🌩️ Infrastructure Evolution: Why e2-micro over Cloud Run?
 
-Unlike standard edge deployments, MindOps utilizes GCP Cloud Run to ensure full control over the container runtime, predictable scaling for data-heavy background processing, and seamless, long-running integration with complex backend n8n automation logic.
+MindOps was migrated from Cloud Run to a dedicated **Google Compute Engine (e2-micro)** instance to maximize cost-efficiency (GCP Free Tier) and entirely eliminate cold starts.
 
-#### GCP Production Environment Secrets (n8n)
-To guarantee low latency and prevent cold-start delays within n8n, the Cloud Run instance is strictly configured with the following critical runtime variables (mapped via standard GCP Secrets or `n8n/service.yaml`):
+To compensate for the `e2-micro`'s inherently limited RAM (1GB), the host OS is configured with a **Swap File**. This acts as a crucial safety buffer, preventing Out Of Memory (OOM) crashes during heavier LLM orchestrations or RAG vector executions, while relying entirely on **Supabase** outside the instance to offload all heavy database workloads.
+
+#### Current Execution Model (Main Process vs. Workers)
+
+To guarantee stability on a micro-instance, the n8n environment is deliberately configured for monolith execution rather than a distributed Queue/Worker model:
 
 | Variable | Value | Architectural Purpose |
 | :--- | :--- | :--- |
-| `N8N_EXECUTIONS_PROCESS` | `main` | **Crucial:** Forces n8n to execute sub-workflows within the main Node thread. Completely eliminates multi-second spin-up latency per webhook. |
+| `N8N_EXECUTIONS_PROCESS` | `main` | **Crucial:** Forces n8n to execute sub-workflows within the main Node thread. Extremely memory efficient for micro-instances. |
 | `EXECUTIONS_DATA_SAVE_*` | `none`/`false` | Strict memory hygiene; prevents database bloat by not storing successful execution histories. |
-| `N8N_PUSH_BACKEND` | `websocket` | Maintains low-latency persistent connections for the UI dash. |
-| `DB_POSTGRESDB_*` | `[...]` | Bypasses local n8n SQLite in favor of the managed Supabase PostgreSQL cluster with a connection pooler limit (`POOLSIZE_MAX=5`). |
+| `DB_POSTGRESDB_*` | `[...]` | Bypasses local n8n SQLite in favor of the external managed Supabase connection, saving significant local RAM and CPU. |
 
-**Evolution Path (Queues & Workers):** The architecture is deliberately separated into isolated services. This makes it trivial to upgrade the communication layer from synchronous HTTP webhooks to an asynchronous **Message Queue** (like Google Cloud Pub/Sub or BullMQ). By introducing dedicated **Worker instances** for heavy AI parsing and RAG retrieval, the system can scale horizontally and handle thousands of concurrent "vent" events without bottlenecking the main orchestration engine.
+**Why no Workers or Queue mode (yet)?**
+Implementing n8n Queue mode requires additional infrastructure (a Redis broker and separate Worker nodes). For an `e2-micro` environment, adding Redis and multiprocess worker overhead would overwhelm the 1GB of RAM. By running `N8N_EXECUTIONS_PROCESS=main` and offloading the entire Database layer to **Supabase**, the architecture remains exceptionally lean, resilient, and perfectly sized for current traffic while keeping operational costs at near-zero.
+
+**Evolution Path:** When traffic scales beyond the capacity of a monolithic e2-micro, the stateless architecture makes it trivial to upgrade to a Redis-backed Queue module and provision dedicated Worker instances on larger infrastructure.
 
 ### Local Initialization
 
