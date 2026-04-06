@@ -1,5 +1,6 @@
 # 🧠 MindOps Web
 
+> **Nota para Ale**: No tienes la imagen `hero-dashboard.png` en tu carpeta `public/assets`. ¡Asegúrate de tomar un screenshot de tu página web (dashboard) y guardarla allí con ese nombre para que aparezca aquí arriba!
 ![MindOps Dashboard](public/assets/hero-dashboard.png)
 
 MindOps is a **Mental Engineering** platform designed to act as an external cognitive processor. It translates unstructured mental noise into deterministic, structured action plans, effectively managing a user's "Cognitive RAM" to maintain peak execution momentum.
@@ -38,6 +39,8 @@ The core automation resides in specialized n8n workflows (`n8n/workflows/`), act
 - **Human in the Loop (HITL):** The system prioritizes human oversight and agency. Users must review, reject, or modify the AI's proposed "Atomic Action" plans before they become active missions.
 - **Closed-Loop Safety Net:** A redundancy automation layer via **Twilio** that actively monitors user execution. If the system detects a state of high cognitive friction and there is no subsequent activity (e.g., clearing a suggested action) for a predefined period, it automatically triggers a physical phone call to the user to break the paralysis loop.
 
+  ![Twilio Safety Protocol](public/assets/twilio.png)
+
 ## 🤖 AI Agent Classification (n8n)
 
 MindOps is engineered as a **Multi-Agent System** that aligns with the industry-standard agentic patterns defined by [n8n.io](https://n8n.io/ai-agents/):
@@ -52,6 +55,8 @@ MindOps is engineered as a **Multi-Agent System** that aligns with the industry-
 
 The infrastructure includes a specialized **Global Error Handler** (SW-ERR) using the `Error Trigger` architecture. This workflow actively monitors the entire orchestration layer and automatically generates real-time alerts via Email (SMTP) or Telegram, providing immediate visibility into execution failures with direct deep-links to the failing node.
 
+![Global Error Handler Architecture](public/assets/global-error-handler.png)
+
 #### 🔄 Orchestration Modules (n8n)
 
 MindOps has been heavily optimized to eliminate N+1 latency issues via a pattern we call **Context Injection Gateway**.
@@ -60,6 +65,8 @@ MindOps has been heavily optimized to eliminate N+1 latency issues via a pattern
 
 - **Middleware (SW-0)**: Global context enricher. On every webhook, it executes a single, ultra-fast Supabase RPC (`get_bot_context`) to instantly hydrate the user's profile, linked language, LLM prompts, and all dynamic UI translations into memory.
 - **Cognitive Engine (SW-1)**: The consolidated logic hub. Downstream agent logic reads directly from the SW-0 injected Memory payload (`$json.context`) to process user "vents", plan missions, and send telegram messages without making redundant database fetching calls.
+
+![Cognitive Engine Architecture](public/assets/sw-1.png)
 
 *(For detailed architectural breakdown of this optimization, see our [Latency Optimization Post-Mortem](docs/LATENCY_OPTIMIZATION.md))*
 
