@@ -1,6 +1,5 @@
 # 🧠 MindOps Web
 
-> **Nota para Ale**: No tienes la imagen `hero-dashboard.png` en tu carpeta `public/assets`. ¡Asegúrate de tomar un screenshot de tu página web (dashboard) y guardarla allí con ese nombre para que aparezca aquí arriba!
 ![MindOps Dashboard](public/assets/hero-dashboard.png)
 
 MindOps is a **Mental Engineering** platform designed to act as an external cognitive processor. It translates unstructured mental noise into deterministic, structured action plans, effectively managing a user's "Cognitive RAM" to maintain peak execution momentum.
@@ -68,7 +67,7 @@ MindOps has been heavily optimized to eliminate N+1 latency issues via a pattern
 
 ![Cognitive Engine Architecture](public/assets/sw-1.png)
 
-*(For detailed architectural breakdown of this optimization, see our [Latency Optimization Post-Mortem](docs/LATENCY_OPTIMIZATION.md))*
+_(For detailed architectural breakdown of this optimization, see our [Latency Optimization Post-Mortem](docs/LATENCY_OPTIMIZATION.md))_
 
 ## 🌍 Globalization & State Synchronization (i18n)
 
@@ -92,6 +91,7 @@ To maintain enterprise-level code quality and ensure AI agents can reason about 
 - **`auth-middleware`**: Logic for the Telegram-to-Web pairing gate and route protection.
 
 Additionally, the project adheres to:
+
 - **Performance Optimization (`vercel-react-best-practices`):** Heavy UI components, such as `CognitiveSimulator`, are lazy-loaded via `next/dynamic` to ensure lightning-fast Time-to-Interactive (TTI).
 - **Accessibility & UI Standards (`web-design-guidelines`):** Fully audited for A11y compliance using semantic roles and ARIA labels.
 
@@ -104,8 +104,8 @@ Additionally, the project adheres to:
 - **Communications:** Telegram API (Input) + [Twilio](https://www.twilio.com/) (Voice Alerts Redundancy)
 - **UI & Analytics Dashboard:** [Tailwind CSS v4](https://tailwindcss.com/), [Framer Motion](https://www.framer.com/motion/), & [Tremor](https://www.tremor.so/).
 - **Infrastructure:** [Google Compute Engine (e2-micro)](https://cloud.google.com/compute) host. Leverages the GCP Free Tier with Swap memory, providing a dedicated, always-on runtime without cold starts.
-    - `n8n/Dockerfile`: Isolated n8n runtime configuration.
-    - `n8n/.env.example`: Standardized environment variable schema.
+  - `n8n/Dockerfile`: Isolated n8n runtime configuration.
+  - `n8n/.env.example`: Standardized environment variable schema.
 
 ## ⚙️ Development & Local Setup
 
@@ -119,11 +119,11 @@ To compensate for the `e2-micro`'s inherently limited RAM (1GB), the host OS is 
 
 To guarantee stability on a micro-instance, the n8n environment is deliberately configured for monolith execution rather than a distributed Queue/Worker model:
 
-| Variable | Value | Architectural Purpose |
-| :--- | :--- | :--- |
-| `N8N_EXECUTIONS_PROCESS` | `main` | **Crucial:** Forces n8n to execute sub-workflows within the main Node thread. Extremely memory efficient for micro-instances. |
-| `EXECUTIONS_DATA_SAVE_*` | `none`/`false` | Strict memory hygiene; prevents database bloat by not storing successful execution histories. |
-| `DB_POSTGRESDB_*` | `[...]` | Bypasses local n8n SQLite in favor of the external managed Supabase connection, saving significant local RAM and CPU. |
+| Variable                 | Value          | Architectural Purpose                                                                                                         |
+| :----------------------- | :------------- | :---------------------------------------------------------------------------------------------------------------------------- |
+| `N8N_EXECUTIONS_PROCESS` | `main`         | **Crucial:** Forces n8n to execute sub-workflows within the main Node thread. Extremely memory efficient for micro-instances. |
+| `EXECUTIONS_DATA_SAVE_*` | `none`/`false` | Strict memory hygiene; prevents database bloat by not storing successful execution histories.                                 |
+| `DB_POSTGRESDB_*`        | `[...]`        | Bypasses local n8n SQLite in favor of the external managed Supabase connection, saving significant local RAM and CPU.         |
 
 **Why no Workers or Queue mode (yet)?**
 Implementing n8n Queue mode requires additional infrastructure (a Redis broker and separate Worker nodes). For an `e2-micro` environment, adding Redis and multiprocess worker overhead would overwhelm the 1GB of RAM. By running `N8N_EXECUTIONS_PROCESS=main` and offloading the entire Database layer to **Supabase**, the architecture remains exceptionally lean, resilient, and perfectly sized for current traffic while keeping operational costs at near-zero.
