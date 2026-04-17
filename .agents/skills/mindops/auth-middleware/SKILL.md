@@ -24,19 +24,24 @@ User visits web ──→ /login ──→ Supabase Auth (email/magic link)
 The middleware is the most critical file in the project. It handles THREE concerns in one pass:
 
 ### 1. Supabase Session Refresh
+
 Creates a Supabase client with cookie handling to keep the auth session alive.
 
 ### 2. Locale Detection
+
 Resolves language using the 6-level priority cascade (see `i18n-guide` skill).
 
 ### 3. Route Protection
+
 ```typescript
 if (!user && isDashboard) → redirect('/login')
 if (user && isLogin)      → redirect('/dashboard')
 ```
 
 ### Matcher Config
+
 Middleware runs on ALL routes EXCEPT:
+
 - `_next/static`, `_next/image` (static assets)
 - `favicon.ico`
 - `auth` (callback route MUST be free for OAuth)
@@ -59,7 +64,7 @@ Even after login, users need BOTH `telegram_id` AND `phone_number` in their prof
 
 ```typescript
 // In dashboard/page.tsx
-if (!profile?.telegram_id || !profile?.phone_number) redirect('/dashboard/pairing');
+if (!profile?.telegram_id || !profile?.phone_number) redirect('/dashboard/pairing')
 ```
 
 The pairing flow is at `/dashboard/pairing` — users enter a code from Telegram to link accounts.
@@ -70,11 +75,14 @@ The pairing flow is at `/dashboard/pairing` — users enter a code from Telegram
 - `src/app/dashboard/actions.ts` → Dashboard-specific mutations
 
 Pattern for server actions:
+
 ```typescript
-'use server';
-const supabase = await createClient();
-const { data: { user } } = await supabase.auth.getUser();
-if (!user) return { success: false, error: 'Unauthorized' };
+'use server'
+const supabase = await createClient()
+const {
+  data: { user },
+} = await supabase.auth.getUser()
+if (!user) return { success: false, error: 'Unauthorized' }
 // ... mutation logic
 ```
 

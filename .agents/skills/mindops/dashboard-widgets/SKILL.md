@@ -30,26 +30,27 @@ src/app/dashboard/page.tsx          (Server Component — fetches ALL data)
 5. Add translation keys to `messages/en.json` and `messages/es.json` under `"Dashboard"` namespace
 
 ### Component Template
-```tsx
-'use client';
 
-import { useTranslations } from 'next-intl';
+```tsx
+'use client'
+
+import { useTranslations } from 'next-intl'
 
 interface Props {
-  data: SomeType[];  // Data comes from page.tsx, not fetched here
+  data: SomeType[] // Data comes from page.tsx, not fetched here
 }
 
 export function NewWidget({ data }: Props) {
-  const t = useTranslations('Dashboard');
-  
+  const t = useTranslations('Dashboard')
+
   return (
     <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-      <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider">
+      <h3 className="text-sm font-medium uppercase tracking-wider text-gray-500">
         {t('newWidgetTitle')}
       </h3>
       {/* Widget content */}
     </div>
-  );
+  )
 }
 ```
 
@@ -57,12 +58,13 @@ export function NewWidget({ data }: Props) {
 
 Heavy data processing is extracted to helper modules:
 
-| File | Functions | Purpose |
-|------|-----------|---------|
-| `weekly.ts` | `buildWeeklyData`, `buildDaySummaries`, `buildSessionPoints`, `computeWeeklyAvg`, `countActiveDays`, `findBestDay`, `findPeakSession` | Weekly friction analysis |
-| `analytics.ts` | `calculateResilienceMetric` | Resilience scoring |
+| File           | Functions                                                                                                                             | Purpose                  |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| `weekly.ts`    | `buildWeeklyData`, `buildDaySummaries`, `buildSessionPoints`, `computeWeeklyAvg`, `countActiveDays`, `findBestDay`, `findPeakSession` | Weekly friction analysis |
+| `analytics.ts` | `calculateResilienceMetric`                                                                                                           | Resilience scoring       |
 
 ### When to create a new helper
+
 If your data transformation is more than ~10 lines, extract it to `src/lib/dashboard/yourhelper.ts`. This keeps components focused on rendering.
 
 ## UI Stack
@@ -75,14 +77,18 @@ If your data transformation is more than ~10 lines, extract it to `src/lib/dashb
 ## Design Patterns
 
 ### Protection Mode
+
 Dashboard has two visual states based on `system_mode`:
+
 - **EXECUTION** — Default light theme (`bg-[var(--color-surface,#FDFDFF)]`)
 - **PROTECTION** — Warm theme (`bg-[var(--color-surface-warm,#FFF8F0)]`)
 
 Pass `isProteccion` prop to widgets that need to adapt their colors.
 
 ### Card Pattern
+
 All widgets use a consistent card style:
+
 ```
 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm
 ```

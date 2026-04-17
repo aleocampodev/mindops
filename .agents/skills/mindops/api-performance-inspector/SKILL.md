@@ -18,6 +18,7 @@ When asked to "inspect API performance", "find N+1 queries", or "audit API route
 5. Recommend `next: { revalidate: N }` on read-only routes.
 
 ## Performance Rules
+
 - Two or more independent `await supabase.from(...)` calls → parallelize with Promise.all
 - `.select('*')` on large tables → select only needed columns
 - No `Cache-Control` on GET handlers → add `s-maxage` header
