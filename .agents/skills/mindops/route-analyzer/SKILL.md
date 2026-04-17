@@ -14,10 +14,12 @@ When asked to "analyze routes", "map routes", or "show route architecture":
 5. Suggest co-location improvements (adding loading.tsx, error.tsx where missing).
 
 ## Rendering Strategy Detection Rules
+
 - File has 'use client' → CLIENT
 - File exports `generateStaticParams` → SSG
 - File has `revalidate` export → ISR
 - Otherwise → SSR (RSC default)
 
 ## Auth Protection
+
 Check middleware.ts matcher config and isDashboard/isLogin pattern guards.

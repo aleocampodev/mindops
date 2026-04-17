@@ -38,6 +38,7 @@ When adding ANY user-facing text, you MUST:
 ## Usage in Components
 
 ### Server Components (preferred)
+
 ```typescript
 import { getTranslations } from 'next-intl/server';
 
@@ -48,6 +49,7 @@ export default async function MyPage() {
 ```
 
 ### Client Components
+
 ```typescript
 'use client';
 import { useTranslations } from 'next-intl';
@@ -61,6 +63,7 @@ export function MyWidget() {
 ## Locale Detection Cascade (middleware.ts)
 
 Priority order — first match wins:
+
 1. **URL param** `?lang=es` or `?locale=es` (from Telegram links)
 2. **Profile DB** `profiles.language` (if user is logged in)
 3. **Telegram session** `telegram_sessions.language` (if has `session_id`)
@@ -82,6 +85,7 @@ src/app/actions/i18n.ts → setUserLanguage server action (cookie + DB + telegra
 ## Translation Sources
 
 Messages come from TWO sources merged together:
+
 1. **Static files:** `messages/en.json`, `messages/es.json`
 2. **Database:** via `getDbTranslations(locale)` from `src/lib/i18n/loader.ts`
 

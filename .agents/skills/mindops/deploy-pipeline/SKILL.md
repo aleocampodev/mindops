@@ -7,16 +7,17 @@ description: Deployment pipeline for MindOps services (frontend + n8n). Use when
 
 ## Two Services, Two Projects
 
-| Service | GCP Project | Image | Port |
-|---------|-------------|-------|------|
-| **Frontend** (Next.js) | `mindops-486323` | Custom Dockerfile (multi-stage) | 3000 |
-| **n8n** (Automation) | `analog-pilot-484600-u8` | `n8nio/n8n:2.8.3` (official) | 5678 |
+| Service                | GCP Project              | Image                           | Port |
+| ---------------------- | ------------------------ | ------------------------------- | ---- |
+| **Frontend** (Next.js) | `mindops-486323`         | Custom Dockerfile (multi-stage) | 3000 |
+| **n8n** (Automation)   | `analog-pilot-484600-u8` | `n8nio/n8n:2.8.3` (official)    | 5678 |
 
 Both run on **Cloud Run** in `us-central1`.
 
 ## Frontend Deploy
 
 ### Via Cloud Build (CI/CD)
+
 ```bash
 gcloud builds submit --config cloudbuild.yaml \
   --substitutions=_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL,_SUPABASE_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY \
@@ -24,20 +25,24 @@ gcloud builds submit --config cloudbuild.yaml \
 ```
 
 ### Via npm script
+
 ```bash
 npm run deploy
 ```
 
 ### Build Pipeline
+
 1. `cloudbuild.yaml` → Docker build with `--build-arg` for Supabase env vars
 2. Pushes to Container Registry (`gcr.io/$PROJECT_ID/mindops-web`)
 3. Deploys to Cloud Run service `mindops-web`
 
 ### Required Environment Variables (build-time)
+
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
 ### Dockerfile Notes
+
 - Uses `output: "standalone"` in `next.config.ts` for minimal production image
 - Multi-stage: `deps` → `builder` → `runner`
 - Runs as non-root user `nextjs` (UID 1001)
@@ -46,6 +51,7 @@ npm run deploy
 ## n8n Deploy
 
 ### Via Service YAML (portable)
+
 ```bash
 # 1. Edit n8n/service.yaml — replace CHANGEME values
 # 2. Deploy:
@@ -54,12 +60,14 @@ gcloud run services replace n8n/service.yaml \
 ```
 
 ### Required Environment Variables (see `n8n/.env.example`)
+
 - `DB_POSTGRESDB_HOST` — Supabase PostgreSQL host
 - `DB_POSTGRESDB_USER` / `DB_POSTGRESDB_PASSWORD`
 - `N8N_ENCRYPTION_KEY` — Required for credential encryption
 - `WEBHOOK_URL` / `N8N_EDITOR_BASE_URL` — Cloud Run service URL
 
 ### n8n Cloud Run Config
+
 - **1 CPU / 2Gi RAM**, min 1 instance, max 1 instance
 - **CPU always allocated** (no throttling) — required for websocket connections
 - **Session affinity** enabled — required for editor stability
