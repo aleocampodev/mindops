@@ -1,0 +1,39 @@
+version: '3.8'
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    restart: unless-stopped
+    ports:
+      - '5678:5678'
+    environment:
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=${DB_POSTGRESDB_HOST}
+      - DB_POSTGRESDB_PORT=${DB_POSTGRESDB_PORT:-6543}
+      - DB_POSTGRESDB_DATABASE=${DB_POSTGRESDB_DATABASE:-postgres}
+      - DB_POSTGRESDB_USER=${DB_POSTGRESDB_USER}
+      - DB_POSTGRESDB_PASSWORD=${DB_POSTGRESDB_PASSWORD}
+      - DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED=false
+      - N8N_EXECUTIONS_PROCESS=main
+      - EXECUTIONS_DATA_SAVE_ON_ERROR=none
+      - EXECUTIONS_DATA_SAVE_ON_SUCCESS=none
+      - EXECUTIONS_DATA_SAVE_MANUAL_EXECUTION=false
+      - EXECUTIONS_DATA_PRUNE=true
+      - EXECUTIONS_DATA_MAX_AGE=24
+      - N8N_PROTOCOL=${N8N_PROTOCOL:-https}
+      - N8N_PORT=${N8N_PORT:-5678}
+      - WEBHOOK_URL=${WEBHOOK_URL}
+      - N8N_EDITOR_BASE_URL=${N8N_EDITOR_BASE_URL}
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      - N8N_SECURE_COOKIE=${N8N_SECURE_COOKIE:-false}
+      - N8N_METRICS=${N8N_METRICS:-false}
+      - N8N_PUSH_BACKEND=websocket
+      - N8N_ATTRIBUTION_ENABLED=false
+      - N8N_BLOCK_ENV_ACCESS_IN_JS=${N8N_BLOCK_ENV_ACCESS_IN_JS:-false}
+      - NODE_OPTIONS=--max-old-space-size=512
+      - N8N_HOST=${N8N_HOST}
+      - VUE_APP_URL_BASE_API=${VUE_APP_URL_BASE_API}
+    volumes:
+      - ./n8n-files:/home/node/.n8n
+    extra_hosts:
+      - '${N8N_HOST}:172.17.0.1'
