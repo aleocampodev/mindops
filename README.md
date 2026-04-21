@@ -1,7 +1,6 @@
 # 🧠 MindOps Web
 
-> **Nota para Ale**: No tienes la imagen `hero-dashboard.png` en tu carpeta `public/assets`. ¡Asegúrate de tomar un screenshot de tu página web (dashboard) y guardarla allí con ese nombre para que aparezca aquí arriba!
-> ![MindOps Dashboard](public/assets/hero-dashboard.png)
+![MindOps Dashboard](public/assets/hero-dashboard.png)
 
 MindOps is a **Mental Engineering** platform designed to act as an external cognitive processor. It translates unstructured mental noise into deterministic, structured action plans, effectively managing a user's "Cognitive RAM" to maintain peak execution momentum.
 
