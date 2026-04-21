@@ -250,7 +250,7 @@ export default async function PairingPage() {
               <div className="space-y-6">
                 <PairingTimer expiresAt={pairingData.expiresAt} />
 
-                <form action={async () => {
+                <form action={async (_formData: FormData) => {
                   'use server';
                   await generatePairingCode();
                 }} className="flex justify-center">
