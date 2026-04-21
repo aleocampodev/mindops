@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-20T19:49:32.683Z",
+  "updatedAt": "2026-04-06T02:19:00.565Z",
   "createdAt": "2026-02-22T02:47:27.069Z",
   "id": "cO9M1BtWC9im653l",
   "name": "MindOps Orchestrator",
@@ -22,31 +22,7 @@
                 "conditions": [
                   {
                     "id": "9d2b065e-4a21-46ec-ac60-8d97cf538afa",
-                    "leftValue": "={{ $json.input_text }}",
-                    "rightValue": "/start",
-                    "operator": {
-                      "type": "string",
-                      "operation": "startsWith"
-                    }
-                  }
-                ],
-                "combinator": "and"
-              },
-              "renameOutput": true,
-              "outputKey": "Start"
-            },
-            {
-              "conditions": {
-                "options": {
-                  "caseSensitive": true,
-                  "leftValue": "",
-                  "typeValidation": "loose",
-                  "version": 3
-                },
-                "conditions": [
-                  {
-                    "id": "80cf19f5-f520-4c7e-8cb6-55b54cc78c73",
-                    "leftValue": "={{ $json.input_text }}",
+                    "leftValue": "={{ $node[\"Format Telegram Input\"].json.input_text.trim() }}",
                     "rightValue": "lang_",
                     "operator": {
                       "type": "string",
@@ -69,8 +45,8 @@
                 },
                 "conditions": [
                   {
-                    "id": "c8b570c4-f875-469c-8999-a02323aaa53b",
-                    "leftValue": "={{ $json.input_text }}",
+                    "id": "80cf19f5-f520-4c7e-8cb6-55b54cc78c73",
+                    "leftValue": "={{$node[\"Format Telegram Input\"].json.input_text.trim()}}",
                     "rightValue": "/vinculate",
                     "operator": {
                       "type": "string",
@@ -93,8 +69,32 @@
                 },
                 "conditions": [
                   {
+                    "id": "c8b570c4-f875-469c-8999-a02323aaa53b",
+                    "leftValue": "={{ $node[\"Format Telegram Input\"].json.input_text.trim() }}",
+                    "rightValue": "/start",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Start"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 3
+                },
+                "conditions": [
+                  {
                     "id": "47c15192-d237-4bbb-9ef0-5e636f03f8aa",
-                    "leftValue": "={{ $json.is_contact }}",
+                    "leftValue": "={{ \n  $node[\"Format Telegram Input\"].json.is_contact === true\n  || $json.user?.onboarding_state === \"PENDING_CONTACT\"\n}}",
                     "rightValue": "",
                     "operator": {
                       "type": "boolean",
@@ -119,8 +119,8 @@
                 "conditions": [
                   {
                     "id": "5bfcdbb0-9f5f-404a-9a1b-39923b41253e",
-                    "leftValue": "={{ ($json.has_voice || ($json.input_text != '' && !$json.input_text.startsWith('/'))) && $json.is_button === false }}",
-                    "rightValue": "",
+                    "leftValue": "={{ \n  $json.exists === true \n  && $node[\"Format Telegram Input\"].json.is_button === false\n  && $json.user?.onboarding_state !== \"PENDING_CONTACT\"\n}}",
+                    "rightValue": "Thoughts (AI)",
                     "operator": {
                       "type": "boolean",
                       "operation": "true",
@@ -144,8 +144,8 @@
                 "conditions": [
                   {
                     "id": "c49d0fba-8b83-4de6-85f8-396ee0c86dcd",
-                    "leftValue": "={{ $json.is_button }}",
-                    "rightValue": "",
+                    "leftValue": "={{ $json.exists === true && $node[\"Format Telegram Input\"].json.is_button === true }}",
+                    "rightValue": "Buttons (Mission)",
                     "operator": {
                       "type": "boolean",
                       "operation": "true",
@@ -168,166 +168,24 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
       "position": [
-        -1024,
-        1472
+        -2096,
+        1536
       ],
       "id": "9d220242-0786-4657-aa6e-89547b982a6a",
       "name": "Main Router"
     },
     {
       "parameters": {
-        "workflowId": {
-          "__rl": true,
-          "value": "zZYZA8aKwUckaap4",
-          "mode": "list",
-          "cachedResultUrl": "/workflow/zZYZA8aKwUckaap4",
-          "cachedResultName": "SW-5:Message telegram"
-        },
-        "workflowInputs": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "chat_id": "={{ $json.chat_id }}",
-            "text": "={{ $json.context.translations.msg_wait_thinking ||  \"¡Recibido! Analizando tus pensamientos... 🧠 \"}}\n"
-          },
-          "matchingColumns": [],
-          "schema": [
-            {
-              "id": "chat_id",
-              "displayName": "chat_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
-            },
-            {
-              "id": "text",
-              "displayName": "text",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
-            },
-            {
-              "id": "markup_type",
-              "displayName": "markup_type",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": true
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": true
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1.3,
-      "position": [
-        96,
-        1872
-      ],
-      "id": "82c9a7f9-8e79-4e44-8fb5-a0641b588e20",
-      "name": "Send Wait Message"
-    },
-    {
-      "parameters": {
-        "workflowId": {
-          "__rl": true,
-          "value": "QciYupwAd2AZ6IEf",
-          "mode": "list",
-          "cachedResultUrl": "/workflow/QciYupwAd2AZ6IEf",
-          "cachedResultName": "SW-3: Mission Control"
-        },
-        "workflowInputs": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "telegram_id": "={{ $json.telegram_id }}",
-            "callback_data": "={{ $json.input_text }}",
-            "chat_id": "={{ $json.chat_id }}",
-            "message_id": "={{ $json.message_id }}",
-            "markup_type": "removeInline"
-          },
-          "matchingColumns": [],
-          "schema": [
-            {
-              "id": "telegram_id",
-              "displayName": "telegram_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "chat_id",
-              "displayName": "chat_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "callback_data",
-              "displayName": "callback_data",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "message_id",
-              "displayName": "message_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "markup_type",
-              "displayName": "markup_type",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": true
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1.3,
-      "position": [
-        144,
-        2112
-      ],
-      "id": "6bf8b7f4-fa97-4b12-a999-0800d001152f",
-      "name": "Call : Mission Control"
-    },
-    {
-      "parameters": {
         "content": "## Receive & Format Data",
-        "height": 528,
-        "width": 736,
+        "height": 672,
+        "width": 976,
         "color": 5
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -2112,
-        1280
+        -3440,
+        1216
       ],
       "id": "77979ba4-2c25-48ca-af12-4b6a335657ee",
       "name": "Sticky Note1"
@@ -342,8 +200,8 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -1232,
-        1296
+        -2256,
+        1344
       ],
       "id": "549abca6-de37-4849-929f-c043221c9c9e",
       "name": "Sticky Note2"
@@ -357,8 +215,8 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        -32,
-        976
+        -1008,
+        1088
       ],
       "typeVersion": 1,
       "id": "240f4509-3327-4bef-85bb-34b7d315d420",
@@ -373,14 +231,15 @@
         "additionalFields": {}
       },
       "type": "n8n-nodes-base.telegramTrigger",
-      "typeVersion": 1.1,
+      "typeVersion": 1.2,
       "position": [
-        -2048,
-        1456
+        -3360,
+        1520
       ],
       "id": "db9253d1-16f4-4c68-ab35-87b203d525b6",
       "name": "Telegram Trigger",
       "webhookId": "1a3ad167-7a3e-4f30-a207-8efb6cb910ef",
+      "alwaysOutputData": true,
       "credentials": {
         "telegramApi": {
           "id": "R6pSyertWWs11XEK",
@@ -392,137 +251,6 @@
       "parameters": {
         "workflowId": {
           "__rl": true,
-          "value": "hLp8Ac9eAk2fI5Lt",
-          "mode": "list",
-          "cachedResultUrl": "/workflow/hLp8Ac9eAk2fI5Lt",
-          "cachedResultName": "SW-0:Middleware: Global Context Enricher"
-        },
-        "workflowInputs": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "has_voice": "={{ !!$json.message?.voice }}",
-            "is_contact": "={{ !!$json.message?.contact }}",
-            "is_button": "={{ !!$json.callback_query }}",
-            "input_text": "={{ $json.message?.text || $json.callback_query?.data || \"\" }}",
-            "first_name": "={{ $json.message?.from?.first_name || $json.callback_query?.from?.first_name || \"User\" }}",
-            "telegram_id": "={{ ($json.message?.from?.id || $json.callback_query?.from?.id).toString() }}",
-            "file_id": "={{ $json.message?.voice?.file_id || \"\" }}",
-            "contact_phone": "={{ $json.message?.contact?.phone_number || \"\" }}",
-            "chat_id": "={{ ($json.message?.from?.id || $json.callback_query?.from?.id).toString() }}",
-            "message_id": "={{ ($json.message?.message_id || $json.callback_query?.message?.message_id || \"\").toString() }}"
-          },
-          "matchingColumns": [],
-          "schema": [
-            {
-              "id": "telegram_id",
-              "displayName": "telegram_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "input_text",
-              "displayName": "input_text",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "first_name",
-              "displayName": "first_name",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "has_voice",
-              "displayName": "has_voice",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "boolean"
-            },
-            {
-              "id": "file_id",
-              "displayName": "file_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "is_contact",
-              "displayName": "is_contact",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "boolean"
-            },
-            {
-              "id": "contact_phone",
-              "displayName": "contact_phone",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "is_button",
-              "displayName": "is_button",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "boolean"
-            },
-            {
-              "id": "chat_id",
-              "displayName": "chat_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "message_id",
-              "displayName": "message_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": true
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1.3,
-      "position": [
-        -1792,
-        1456
-      ],
-      "id": "943d72eb-da42-4de7-a31f-edd4f1cbbbdd",
-      "name": "Call Middleware",
-      "alwaysOutputData": true
-    },
-    {
-      "parameters": {
-        "workflowId": {
-          "__rl": true,
           "value": "GmInc0tYXj4ZR4kM",
           "mode": "list",
           "cachedResultUrl": "/workflow/GmInc0tYXj4ZR4kM",
@@ -531,12 +259,13 @@
         "workflowInputs": {
           "mappingMode": "defineBelow",
           "value": {
-            "action": "START",
-            "telegram_id": "={{ $json.telegram_id }}",
-            "chat_id": "={{ $json.chat_id }}",
-            "first_name": "={{ $json.first_name }}",
-            "input_text": "={{ $json.input_text }}",
-            "context": "={{ $json.context }}"
+            "action": "start",
+            "chat_id": "={{ $node[\"Format Telegram Input\"].json.chat_id }}",
+            "context": "={{ $node['Supabase: Global Context Gateway'].json }}",
+            "first_name": "={{ $node[\"Format Telegram Input\"].json.first_name }}",
+            "input_text": "={{ $node[\"Format Telegram Input\"].json.input_text }}",
+            "message_id": "={{ $node[\"Format Telegram Input\"].json.message_id }}",
+            "telegram_id": "={{ $node[\"Format Telegram Input\"].json.telegram_id }}"
           },
           "matchingColumns": [],
           "schema": [
@@ -547,8 +276,7 @@
               "defaultMatch": false,
               "display": true,
               "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
+              "type": "string"
             },
             {
               "id": "telegram_id",
@@ -557,8 +285,7 @@
               "defaultMatch": false,
               "display": true,
               "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
+              "type": "string"
             },
             {
               "id": "chat_id",
@@ -567,8 +294,7 @@
               "defaultMatch": false,
               "display": true,
               "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
+              "type": "string"
             },
             {
               "id": "first_name",
@@ -577,8 +303,7 @@
               "defaultMatch": false,
               "display": true,
               "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
+              "type": "string"
             },
             {
               "id": "input_text",
@@ -587,8 +312,7 @@
               "defaultMatch": false,
               "display": true,
               "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
+              "type": "string"
             },
             {
               "id": "contact_phone",
@@ -599,108 +323,6 @@
               "canBeUsedToMatch": true,
               "type": "string",
               "removed": true
-            },
-            {
-              "id": "context",
-              "displayName": "context",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "object",
-              "removed": false
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": true
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1.3,
-      "position": [
-        144,
-        1072
-      ],
-      "id": "a430168c-12d7-4bd6-a5e8-678806994e45",
-      "name": "Call: Identity (START)"
-    },
-    {
-      "parameters": {
-        "workflowId": {
-          "__rl": true,
-          "value": "GmInc0tYXj4ZR4kM",
-          "mode": "list",
-          "cachedResultUrl": "/workflow/GmInc0tYXj4ZR4kM",
-          "cachedResultName": "SW-1: Identity & Onboarding"
-        },
-        "workflowInputs": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "action": "SET_LANGUAGE",
-            "telegram_id": "={{$json.telegram_id.toString()}}",
-            "chat_id": "={{$json.chat_id.toString()}}",
-            "input_text": "={{$json.input_text}}",
-            "contact_phone": "={{$json.contact_phone}}",
-            "context": "={{ $json.context}}",
-            "message_id": "={{ $('Call Middleware').item.json.message_id }}",
-            "first_name": "={{$json.first_name}}"
-          },
-          "matchingColumns": [],
-          "schema": [
-            {
-              "id": "action",
-              "displayName": "action",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "telegram_id",
-              "displayName": "telegram_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "chat_id",
-              "displayName": "chat_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "first_name",
-              "displayName": "first_name",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "input_text",
-              "displayName": "input_text",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "contact_phone",
-              "displayName": "contact_phone",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
             },
             {
               "id": "context",
@@ -718,54 +340,54 @@
               "defaultMatch": false,
               "display": true,
               "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
+              "type": "string"
             }
           ],
           "attemptToConvertTypes": false,
           "convertFieldsToString": true
         },
-        "options": {}
+        "options": {
+          "waitForSubWorkflow": false
+        }
       },
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        160,
-        1264
+        -704,
+        1648
       ],
-      "id": "ddd1e27c-982d-4ee1-92f9-127d1bad7abd",
-      "name": "Call: Identity (SET LANGUAGE)"
+      "id": "a430168c-12d7-4bd6-a5e8-678806994e45",
+      "name": "Call: Identity (START)",
+      "alwaysOutputData": true
     },
     {
       "parameters": {
         "workflowId": {
           "__rl": true,
-          "value": "GmInc0tYXj4ZR4kM",
+          "value": "QciYupwAd2AZ6IEf",
           "mode": "list",
-          "cachedResultUrl": "/workflow/GmInc0tYXj4ZR4kM",
-          "cachedResultName": "SW-1: Identity & Onboarding"
+          "cachedResultUrl": "/workflow/QciYupwAd2AZ6IEf",
+          "cachedResultName": "SW-3: Mission Control"
         },
         "workflowInputs": {
           "mappingMode": "defineBelow",
           "value": {
-            "action": "VINCULATE",
-            "telegram_id": "={{ $json.telegram_id }}",
-            "first_name": "={{ $json.first_name }}",
-            "chat_id": "={{ $json.chat_id }}",
-            "input_text": "={{ $json.input_text }}",
-            "context": "={{ $json.context }}"
+            "chat_id": "={{ $('Format Telegram Input').item.json.chat_id.toString() }}",
+            "telegram_id": "={{ $('Format Telegram Input').item.json.telegram_id.toString() }}",
+            "callback_data": "={{ $('Format Telegram Input').item.json.input_text }}",
+            "context": "={{ $node['Supabase: Global Context Gateway'].json }}",
+            "message_id": "={{ $('Format Telegram Input').item.json.message_id }}"
           },
           "matchingColumns": [],
           "schema": [
             {
-              "id": "action",
-              "displayName": "action",
+              "id": "chat_id",
+              "displayName": "chat_id",
               "required": false,
               "defaultMatch": false,
               "display": true,
               "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
+              "type": "string"
             },
             {
               "id": "telegram_id",
@@ -774,57 +396,16 @@
               "defaultMatch": false,
               "display": true,
               "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
+              "type": "string"
             },
             {
-              "id": "chat_id",
-              "displayName": "chat_id",
+              "id": "callback_data",
+              "displayName": "callback_data",
               "required": false,
               "defaultMatch": false,
               "display": true,
               "canBeUsedToMatch": true,
               "type": "string",
-              "removed": false
-            },
-            {
-              "id": "first_name",
-              "displayName": "first_name",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
-            },
-            {
-              "id": "input_text",
-              "displayName": "input_text",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
-            },
-            {
-              "id": "contact_phone",
-              "displayName": "contact_phone",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": true
-            },
-            {
-              "id": "context",
-              "displayName": "context",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "object",
               "removed": false
             },
             {
@@ -835,6 +416,26 @@
               "display": true,
               "canBeUsedToMatch": true,
               "type": "string",
+              "removed": false
+            },
+            {
+              "id": "context",
+              "displayName": "context",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "object",
+              "removed": false
+            },
+            {
+              "id": "markup_type",
+              "displayName": "markup_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
               "removed": true
             }
           ],
@@ -843,14 +444,15 @@
         },
         "options": {}
       },
+      "id": "6bf8b7f4-fa97-4b12-a999-0800d001152f_new",
+      "name": "Call : Mission Control",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        144,
-        1488
+        -832,
+        2224
       ],
-      "id": "eaa14841-398d-4a48-a758-c7cc3daa866d",
-      "name": "Call: Identity (VINCULATE)1"
+      "alwaysOutputData": true
     },
     {
       "parameters": {
@@ -864,13 +466,13 @@
         "workflowInputs": {
           "mappingMode": "defineBelow",
           "value": {
-            "action": "CONTACT",
-            "telegram_id": "={{ $json.telegram_id}}",
-            "chat_id": "={{ $json.chat_id }}",
-            "first_name": "={{ $('Telegram Trigger').item.json.message.chat.first_name }}",
-            "input_text": "={{ $('Telegram Trigger').item.json.message.text }}",
-            "context": "={{ $json.context }}",
-            "contact_phone": "={{ $json.contact_phone }}"
+            "action": "set_language",
+            "telegram_id": "={{ $node[\"Supabase: Global Context Gateway\"].json.user?.id || $node[\"Format Telegram Input\"].json.telegram_id.toString() }}",
+            "chat_id": "={{ $node[\"Format Telegram Input\"].json.chat_id.toString() }}",
+            "first_name": "={{ $node[\"Format Telegram Input\"].json.first_name }}",
+            "input_text": "={{ $node[\"Format Telegram Input\"].json.input_text.trim() }}",
+            "context": "={{ $node[\"Supabase: Global Context Gateway\"].json }}",
+            "message_id": "={{ $node[\"Format Telegram Input\"].json.message_id }}"
           },
           "matchingColumns": [],
           "schema": [
@@ -881,8 +483,7 @@
               "defaultMatch": false,
               "display": true,
               "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
+              "type": "string"
             },
             {
               "id": "telegram_id",
@@ -891,8 +492,7 @@
               "defaultMatch": false,
               "display": true,
               "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
+              "type": "string"
             },
             {
               "id": "chat_id",
@@ -901,8 +501,7 @@
               "defaultMatch": false,
               "display": true,
               "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
+              "type": "string"
             },
             {
               "id": "first_name",
@@ -911,8 +510,7 @@
               "defaultMatch": false,
               "display": true,
               "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
+              "type": "string"
             },
             {
               "id": "input_text",
@@ -921,8 +519,232 @@
               "defaultMatch": false,
               "display": true,
               "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "contact_phone",
+              "displayName": "contact_phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
               "type": "string",
-              "removed": false
+              "removed": true
+            },
+            {
+              "id": "context",
+              "displayName": "context",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "object"
+            },
+            {
+              "id": "message_id",
+              "displayName": "message_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "id": "ddd1e27c-982d-4ee1-92f9-127d1bad7abd_new",
+      "name": "Call: Identity (SET LANGUAGE)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        -736,
+        1200
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "GmInc0tYXj4ZR4kM",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/GmInc0tYXj4ZR4kM",
+          "cachedResultName": "SW-1: Identity & Onboarding"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "action": "vinculate",
+            "chat_id": "={{ $('Format Telegram Input').item.json.chat_id.toString() }}",
+            "context": "={{ $node['Supabase: Global Context Gateway'].json }}",
+            "first_name": "={{ $('Format Telegram Input').item.json.first_name }}",
+            "input_text": "={{ $('Format Telegram Input').item.json.input_text }}",
+            "message_id": "={{ $('Format Telegram Input').item.json.message_id }}",
+            "telegram_id": "={{ $('Format Telegram Input').item.json.telegram_id.toString()}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "action",
+              "displayName": "action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "telegram_id",
+              "displayName": "telegram_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "chat_id",
+              "displayName": "chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "first_name",
+              "displayName": "first_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "input_text",
+              "displayName": "input_text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "contact_phone",
+              "displayName": "contact_phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": true
+            },
+            {
+              "id": "context",
+              "displayName": "context",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "object"
+            },
+            {
+              "id": "message_id",
+              "displayName": "message_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "id": "eaa14841-398d-4a48-a758-c7cc3daa866d_new",
+      "name": "Call: Identity (VINCULATE)1",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        -720,
+        1456
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "GmInc0tYXj4ZR4kM",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/GmInc0tYXj4ZR4kM",
+          "cachedResultName": "SW-1: Identity & Onboarding"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "action": "contact",
+            "chat_id": "={{ $node['Format Telegram Input'].json.chat_id.toString() }}",
+            "context": "={{ $node['Supabase: Global Context Gateway'].json }}",
+            "first_name": "={{ $node['Format Telegram Input'].json.first_name }}",
+            "input_text": "={{ $node['Format Telegram Input'].json.input_text }}",
+            "message_id": "={{ $node['Format Telegram Input'].json.message_id }}",
+            "telegram_id": "={{ $node['Format Telegram Input'].json.telegram_id.toString() }}",
+            "contact_phone": "={{ $node['Format Telegram Input'].json.contact_phone }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "action",
+              "displayName": "action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "telegram_id",
+              "displayName": "telegram_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "chat_id",
+              "displayName": "chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "first_name",
+              "displayName": "first_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "input_text",
+              "displayName": "input_text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
             },
             {
               "id": "contact_phone",
@@ -941,23 +763,34 @@
               "defaultMatch": false,
               "display": true,
               "canBeUsedToMatch": true,
-              "type": "object",
-              "removed": false
+              "type": "object"
+            },
+            {
+              "id": "message_id",
+              "displayName": "message_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
             }
           ],
           "attemptToConvertTypes": false,
           "convertFieldsToString": true
         },
-        "options": {}
+        "options": {
+          "waitForSubWorkflow": false
+        }
       },
+      "id": "7e09cea8-ae7c-41c0-b79d-aa4e2f4ad762_new",
+      "name": "Call: Identity (CONTACT)",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        144,
-        1696
+        -656,
+        1840
       ],
-      "id": "7e09cea8-ae7c-41c0-b79d-aa4e2f4ad762",
-      "name": "Call: Identity (CONTACT)"
+      "alwaysOutputData": true
     },
     {
       "parameters": {
@@ -971,25 +804,15 @@
         "workflowInputs": {
           "mappingMode": "defineBelow",
           "value": {
-            "has_voice": "={{ $('Call Middleware').item.json.has_voice }}",
-            "telegram_id": "={{ $('Call Middleware').item.json.telegram_id.toString() }}",
-            "chat_id": "={{ $('Call Middleware').item.json.chat_id.toString()}}",
-            "input_text": "={{ $('Call Middleware').item.json.input_text }}",
-            "file_id": "={{ $('Call Middleware').item.json.file_id }}",
-            "context": "={{ $('Call Middleware').item.json.context }}"
+            "chat_id": "={{ $('Format Telegram Input').item.json.chat_id.toString() }}",
+            "context": "={{ $node['Supabase: Global Context Gateway'].json }}",
+            "input_text": "={{ $('Format Telegram Input').item.json.input_text }}",
+            "telegram_id": "={{ $('Format Telegram Input').item.json.telegram_id.toString() }}",
+            "has_voice": "={{ $('Format Telegram Input').item.json.has_voice }}",
+            "file_id": "={{ $('Format Telegram Input').item.json.file_id }}"
           },
           "matchingColumns": [],
           "schema": [
-            {
-              "id": "telegram_id",
-              "displayName": "telegram_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
-            },
             {
               "id": "chat_id",
               "displayName": "chat_id",
@@ -997,8 +820,16 @@
               "defaultMatch": false,
               "display": true,
               "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
+              "type": "string"
+            },
+            {
+              "id": "telegram_id",
+              "displayName": "telegram_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
             },
             {
               "id": "input_text",
@@ -1007,8 +838,7 @@
               "defaultMatch": false,
               "display": true,
               "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
+              "type": "string"
             },
             {
               "id": "has_voice",
@@ -1031,14 +861,33 @@
               "removed": false
             },
             {
+              "id": "is_button",
+              "displayName": "is_button",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "boolean",
+              "removed": true
+            },
+            {
               "id": "context",
               "displayName": "context",
               "required": false,
               "defaultMatch": false,
               "display": true,
               "canBeUsedToMatch": true,
-              "type": "object",
-              "removed": false
+              "type": "object"
+            },
+            {
+              "id": "telegram_token",
+              "displayName": "telegram_token",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": true
             }
           ],
           "attemptToConvertTypes": false,
@@ -1046,26 +895,221 @@
         },
         "options": {}
       },
+      "id": "5df12530-6765-4dca-9a28-6eb55f36f56d_new",
+      "name": "Call: Cognitive Engine (ASYNC)",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        432,
-        1856
+        -624,
+        2016
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $node[\"Format Telegram Input\"].json.chat_id }}",
+        "text": "={{ $('Supabase: Global Context Gateway').item.json.translations['msg_wait_thinking '] }}\n",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -880,
+        2016
       ],
-      "id": "5df12530-6765-4dca-9a28-6eb55f36f56d",
-      "name": "Call: Cognitive Engine (ASYNC)"
+      "id": "3400a44e-0b44-4288-9eaf-4024bbc9060a",
+      "name": "Send a text message",
+      "webhookId": "ce766f98-7438-415a-92a3-8f07644c9ee6",
+      "credentials": {
+        "telegramApi": {
+          "id": "R6pSyertWWs11XEK",
+          "name": "Telegram_Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1452319-a415-42ec-b75a-4ea9875da017",
+              "name": "telegram_id",
+              "value": "={{ $json.message?.from?.id || $json.callback_query?.from?.id }}",
+              "type": "string"
+            },
+            {
+              "id": "f3103809-2930-477c-9f42-9ff148bf7810",
+              "name": "chat_id",
+              "value": "={{ $json.message?.chat?.id || $json.callback_query?.message?.chat?.id }}",
+              "type": "string"
+            },
+            {
+              "id": "f01cb432-8e64-483e-af90-0eb0c2af0562",
+              "name": "first_name",
+              "value": "={{ $json.message?.from?.first_name || $json.callback_query?.from?.first_name }}",
+              "type": "string"
+            },
+            {
+              "id": "02c4e5cc-a414-4108-befc-773e4091baec",
+              "name": "input_text",
+              "value": "= {{ $json.message?.text || $json.callback_query?.data || \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "5efb5004-0f4e-4887-ad75-3ec531ec0bdc",
+              "name": "message_id",
+              "value": "={{ $json.message?.message_id || $json.callback_query?.message?.message_id }}",
+              "type": "string"
+            },
+            {
+              "id": "b03ef519-9c0f-453b-ac65-2d07c0804de2",
+              "name": "is_button",
+              "value": "={{!!$json.callback_query}}",
+              "type": "boolean"
+            },
+            {
+              "id": "f10e3187-b932-4e53-abcc-d9f00965b5aa",
+              "name": "has_voice",
+              "value": "={{!!$json.message?.voice}}",
+              "type": "boolean"
+            },
+            {
+              "id": "9e9327fe-6036-43cf-98a8-3f08989ec1ba",
+              "name": "=is_contact",
+              "value": "={{ !!$json.message?.contact }}",
+              "type": "string"
+            },
+            {
+              "id": "c08a4039-fc5e-4fc9-8c86-bc5ba3b8f7c9",
+              "name": "contact_phone",
+              "value": "={{ $json.message?.contact?.phone_number || \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "b44ed984-c69c-49a7-9afb-38e572625c6c",
+              "name": "file_id",
+              "value": "={{ $json.message?.voice?.file_id || \"\" }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -3136,
+        1520
+      ],
+      "id": "13258123-3076-40dd-8996-4ad83d638f7e",
+      "name": "Format Telegram Input"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://rncmxbvrxglbdcagiltc.supabase.co/rest/v1/rpc/get_bot_context",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpMultipleHeadersAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept-Profile",
+              "value": "mindops"
+            },
+            {
+              "name": "Content-Profile",
+              "value": "mindops"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "p_user_id",
+              "value": "={{ $('Format Telegram Input').item.json.telegram_id }}"
+            },
+            {
+              "name": "p_prefered_lang",
+              "value": "={{ $json.prefered_lang }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -2688,
+        1552
+      ],
+      "id": "029ced7d-451d-47ad-847f-57667a329e52",
+      "name": "Supabase: Global Context Gateway",
+      "credentials": {
+        "httpMultipleHeadersAuth": {
+          "id": "9KY2AHXMXRxyjGim",
+          "name": "Supabase"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nconst inputText = (item.input_text || '').trim();\nconst preferedLang = inputText.startsWith('lang_') \n  ? inputText.substring(5) \n  : '';\n\nreturn [{\n  json: {\n    ...item,\n    prefered_lang: preferedLang\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2912,
+        1536
+      ],
+      "id": "df49e511-50a3-41b2-a6f5-caf5dfb5a7fc",
+      "name": "Extract language"
+    },
+    {
+      "parameters": {
+        "content": "##  Error Handling",
+        "height": 320,
+        "width": 368,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2208,
+        2128
+      ],
+      "typeVersion": 1,
+      "id": "0ea3eedd-620f-4596-af25-a7b8423395f3",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Format Telegram Input').item.json.chat_id }}",
+        "text": "={{ $('Supabase: Global Context Gateway').item.json.translations?.error_message_onboarding}}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -2112,
+        2240
+      ],
+      "id": "e078fbaf-772e-4ec0-ac5e-0a9a45897981",
+      "name": "Error message",
+      "webhookId": "dd07f348-a5c7-44d9-aa8f-c77d52d7f325",
+      "credentials": {
+        "telegramApi": {
+          "id": "R6pSyertWWs11XEK",
+          "name": "Telegram_Token"
+        }
+      }
     }
   ],
   "connections": {
     "Main Router": {
       "main": [
-        [
-          {
-            "node": "Call: Identity (START)",
-            "type": "main",
-            "index": 0
-          }
-        ],
         [
           {
             "node": "Call: Identity (SET LANGUAGE)",
@@ -1082,6 +1126,13 @@
         ],
         [
           {
+            "node": "Call: Identity (START)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
             "node": "Call: Identity (CONTACT)",
             "type": "main",
             "index": 0
@@ -1089,7 +1140,7 @@
         ],
         [
           {
-            "node": "Send Wait Message",
+            "node": "Send a text message",
             "type": "main",
             "index": 0
           }
@@ -1103,7 +1154,18 @@
         ]
       ]
     },
-    "Send Wait Message": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Format Telegram Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message": {
       "main": [
         [
           {
@@ -1114,18 +1176,18 @@
         ]
       ]
     },
-    "Telegram Trigger": {
+    "Format Telegram Input": {
       "main": [
         [
           {
-            "node": "Call Middleware",
+            "node": "Extract language",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Call Middleware": {
+    "Supabase: Global Context Gateway": {
       "main": [
         [
           {
@@ -1133,10 +1195,33 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "Error message",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
-    "Call: Cognitive Engine (ASYNC)": {
+    "Call: Identity (SET LANGUAGE)": {
+      "main": [
+        []
+      ]
+    },
+    "Extract language": {
+      "main": [
+        [
+          {
+            "node": "Supabase: Global Context Gateway",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call: Identity (START)": {
       "main": [
         []
       ]
@@ -1152,11 +1237,13 @@
     "saveDataSuccessExecution": "all"
   },
   "staticData": null,
-  "meta": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
   "pinData": {},
-  "versionId": "7158b72f-2435-4cc5-87c2-206617841c79",
-  "activeVersionId": "08065616-55d4-421d-beb7-5eb97bb57ba6",
-  "versionCounter": 1030,
+  "versionId": "6d1780fd-1745-43f3-9ca4-bcde310a463d",
+  "activeVersionId": "3936237c-d7f3-4209-bf5f-55a7c52a3203",
+  "versionCounter": 1987,
   "triggerCount": 1,
   "shared": [
     {
@@ -1179,9 +1266,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-03-18T19:35:46.833Z",
-    "createdAt": "2026-03-16T02:43:49.350Z",
-    "versionId": "08065616-55d4-421d-beb7-5eb97bb57ba6",
+    "updatedAt": "2026-04-01T03:12:53.296Z",
+    "createdAt": "2026-04-01T03:12:48.117Z",
+    "versionId": "3936237c-d7f3-4209-bf5f-55a7c52a3203",
     "workflowId": "cO9M1BtWC9im653l",
     "nodes": [
       {
@@ -1199,31 +1286,7 @@
                   "conditions": [
                     {
                       "id": "9d2b065e-4a21-46ec-ac60-8d97cf538afa",
-                      "leftValue": "={{ $json.input_text }}",
-                      "rightValue": "/start",
-                      "operator": {
-                        "type": "string",
-                        "operation": "startsWith"
-                      }
-                    }
-                  ],
-                  "combinator": "and"
-                },
-                "renameOutput": true,
-                "outputKey": "Start"
-              },
-              {
-                "conditions": {
-                  "options": {
-                    "caseSensitive": true,
-                    "leftValue": "",
-                    "typeValidation": "loose",
-                    "version": 3
-                  },
-                  "conditions": [
-                    {
-                      "id": "80cf19f5-f520-4c7e-8cb6-55b54cc78c73",
-                      "leftValue": "={{ $json.input_text }}",
+                      "leftValue": "={{ $node[\"Format Telegram Input\"].json.input_text.trim() }}",
                       "rightValue": "lang_",
                       "operator": {
                         "type": "string",
@@ -1246,8 +1309,8 @@
                   },
                   "conditions": [
                     {
-                      "id": "c8b570c4-f875-469c-8999-a02323aaa53b",
-                      "leftValue": "={{ $json.input_text }}",
+                      "id": "80cf19f5-f520-4c7e-8cb6-55b54cc78c73",
+                      "leftValue": "={{$node[\"Format Telegram Input\"].json.input_text.trim()}}",
                       "rightValue": "/vinculate",
                       "operator": {
                         "type": "string",
@@ -1270,8 +1333,32 @@
                   },
                   "conditions": [
                     {
+                      "id": "c8b570c4-f875-469c-8999-a02323aaa53b",
+                      "leftValue": "={{ $node[\"Format Telegram Input\"].json.input_text.trim() }}",
+                      "rightValue": "/start",
+                      "operator": {
+                        "type": "string",
+                        "operation": "startsWith"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "Start"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "loose",
+                    "version": 3
+                  },
+                  "conditions": [
+                    {
                       "id": "47c15192-d237-4bbb-9ef0-5e636f03f8aa",
-                      "leftValue": "={{ $json.is_contact }}",
+                      "leftValue": "={{ \n  $node[\"Format Telegram Input\"].json.is_contact === true\n  || $json.user?.onboarding_state === \"PENDING_CONTACT\"\n}}",
                       "rightValue": "",
                       "operator": {
                         "type": "boolean",
@@ -1296,8 +1383,8 @@
                   "conditions": [
                     {
                       "id": "5bfcdbb0-9f5f-404a-9a1b-39923b41253e",
-                      "leftValue": "={{ ($json.has_voice || ($json.input_text != '' && !$json.input_text.startsWith('/'))) && $json.is_button === false }}",
-                      "rightValue": "",
+                      "leftValue": "={{ \n  $json.exists === true \n  && $node[\"Format Telegram Input\"].json.is_button === false\n  && $json.user?.onboarding_state !== \"PENDING_CONTACT\"\n}}",
+                      "rightValue": "Thoughts (AI)",
                       "operator": {
                         "type": "boolean",
                         "operation": "true",
@@ -1321,8 +1408,8 @@
                   "conditions": [
                     {
                       "id": "c49d0fba-8b83-4de6-85f8-396ee0c86dcd",
-                      "leftValue": "={{ $json.is_button }}",
-                      "rightValue": "",
+                      "leftValue": "={{ $json.exists === true && $node[\"Format Telegram Input\"].json.is_button === true }}",
+                      "rightValue": "Buttons (Mission)",
                       "operator": {
                         "type": "boolean",
                         "operation": "true",
@@ -1345,181 +1432,24 @@
         "type": "n8n-nodes-base.switch",
         "typeVersion": 3.4,
         "position": [
-          -1024,
-          1472
+          -2096,
+          1536
         ],
         "id": "9d220242-0786-4657-aa6e-89547b982a6a",
         "name": "Main Router"
       },
       {
         "parameters": {
-          "workflowId": {
-            "__rl": true,
-            "value": "zZYZA8aKwUckaap4",
-            "mode": "list",
-            "cachedResultUrl": "/workflow/zZYZA8aKwUckaap4",
-            "cachedResultName": "SW-5:Message telegram"
-          },
-          "workflowInputs": {
-            "mappingMode": "defineBelow",
-            "value": {
-              "chat_id": "={{ $json.chat_id }}",
-              "text": "={{ $json.context.translations.msg_wait_thinking ||  \"¡Recibido! Analizando tus pensamientos... 🧠 \"}}\n"
-            },
-            "matchingColumns": [],
-            "schema": [
-              {
-                "id": "chat_id",
-                "displayName": "chat_id",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string",
-                "removed": false
-              },
-              {
-                "id": "text",
-                "displayName": "text",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string",
-                "removed": false
-              },
-              {
-                "id": "markup_type",
-                "displayName": "markup_type",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string",
-                "removed": true
-              }
-            ],
-            "attemptToConvertTypes": false,
-            "convertFieldsToString": true
-          },
-          "options": {}
-        },
-        "type": "n8n-nodes-base.executeWorkflow",
-        "typeVersion": 1.3,
-        "position": [
-          96,
-          1872
-        ],
-        "id": "82c9a7f9-8e79-4e44-8fb5-a0641b588e20",
-        "name": "Send Wait Message"
-      },
-      {
-        "parameters": {
-          "workflowId": {
-            "__rl": true,
-            "value": "QciYupwAd2AZ6IEf",
-            "mode": "list",
-            "cachedResultUrl": "/workflow/QciYupwAd2AZ6IEf",
-            "cachedResultName": "SW-3: Mission Control"
-          },
-          "workflowInputs": {
-            "mappingMode": "defineBelow",
-            "value": {
-              "telegram_id": "={{ $json.telegram_id }}",
-              "callback_data": "={{ $json.input_text }}",
-              "chat_id": "={{ $json.chat_id }}",
-              "message_id": "={{ $json.message_id }}",
-              "markup_type": "removeInline"
-            },
-            "matchingColumns": [],
-            "schema": [
-              {
-                "id": "telegram_id",
-                "displayName": "telegram_id",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string"
-              },
-              {
-                "id": "chat_id",
-                "displayName": "chat_id",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string"
-              },
-              {
-                "id": "callback_data",
-                "displayName": "callback_data",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string"
-              },
-              {
-                "id": "message_id",
-                "displayName": "message_id",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string"
-              },
-              {
-                "id": "markup_type",
-                "displayName": "markup_type",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string"
-              }
-            ],
-            "attemptToConvertTypes": false,
-            "convertFieldsToString": true
-          },
-          "options": {}
-        },
-        "type": "n8n-nodes-base.executeWorkflow",
-        "typeVersion": 1.3,
-        "position": [
-          144,
-          2112
-        ],
-        "id": "6bf8b7f4-fa97-4b12-a999-0800d001152f",
-        "name": "Call : Mission Control"
-      },
-      {
-        "parameters": {
-          "content": "## Description\nThis is the main entry point (Webhook) of the application. It receives all user interactions from Telegram, standardizes the payload, and delegates execution to the corresponding specialized sub-workflow based on the user's intent",
-          "height": 144,
-          "width": 576
-        },
-        "type": "n8n-nodes-base.stickyNote",
-        "position": [
-          -1616,
-          880
-        ],
-        "typeVersion": 1,
-        "id": "5ae4c501-0d68-4daf-9a8e-22edd13385d0",
-        "name": "Sticky Note"
-      },
-      {
-        "parameters": {
           "content": "## Receive & Format Data",
-          "height": 528,
-          "width": 736,
+          "height": 672,
+          "width": 976,
           "color": 5
         },
         "type": "n8n-nodes-base.stickyNote",
         "typeVersion": 1,
         "position": [
-          -2112,
-          1280
+          -3392,
+          1216
         ],
         "id": "77979ba4-2c25-48ca-af12-4b6a335657ee",
         "name": "Sticky Note1"
@@ -1534,8 +1464,8 @@
         "type": "n8n-nodes-base.stickyNote",
         "typeVersion": 1,
         "position": [
-          -1232,
-          1296
+          -2256,
+          1344
         ],
         "id": "549abca6-de37-4849-929f-c043221c9c9e",
         "name": "Sticky Note2"
@@ -1549,8 +1479,8 @@
         },
         "type": "n8n-nodes-base.stickyNote",
         "position": [
-          -32,
-          976
+          -1008,
+          1088
         ],
         "typeVersion": 1,
         "id": "240f4509-3327-4bef-85bb-34b7d315d420",
@@ -1565,14 +1495,15 @@
           "additionalFields": {}
         },
         "type": "n8n-nodes-base.telegramTrigger",
-        "typeVersion": 1.1,
+        "typeVersion": 1.2,
         "position": [
-          -2048,
-          1456
+          -3360,
+          1520
         ],
         "id": "db9253d1-16f4-4c68-ab35-87b203d525b6",
         "name": "Telegram Trigger",
         "webhookId": "1a3ad167-7a3e-4f30-a207-8efb6cb910ef",
+        "alwaysOutputData": true,
         "credentials": {
           "telegramApi": {
             "id": "R6pSyertWWs11XEK",
@@ -1584,137 +1515,6 @@
         "parameters": {
           "workflowId": {
             "__rl": true,
-            "value": "hLp8Ac9eAk2fI5Lt",
-            "mode": "list",
-            "cachedResultUrl": "/workflow/hLp8Ac9eAk2fI5Lt",
-            "cachedResultName": "SW-0:Middleware: Global Context Enricher"
-          },
-          "workflowInputs": {
-            "mappingMode": "defineBelow",
-            "value": {
-              "has_voice": "={{ !!$json.message?.voice }}",
-              "is_contact": "={{ !!$json.message?.contact }}",
-              "is_button": "={{ !!$json.callback_query }}",
-              "input_text": "={{ $json.message?.text || $json.callback_query?.data || \"\" }}",
-              "first_name": "={{ $json.message?.from?.first_name || $json.callback_query?.from?.first_name || \"User\" }}",
-              "telegram_id": "={{ ($json.message?.from?.id || $json.callback_query?.from?.id).toString() }}",
-              "file_id": "={{ $json.message?.voice?.file_id || \"\" }}",
-              "contact_phone": "={{ $json.message?.contact?.phone_number || \"\" }}",
-              "chat_id": "={{ ($json.message?.from?.id || $json.callback_query?.from?.id).toString() }}",
-              "message_id": "={{ ($json.message?.message_id || $json.callback_query?.message?.message_id || \"\").toString() }}"
-            },
-            "matchingColumns": [],
-            "schema": [
-              {
-                "id": "telegram_id",
-                "displayName": "telegram_id",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string"
-              },
-              {
-                "id": "input_text",
-                "displayName": "input_text",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string"
-              },
-              {
-                "id": "first_name",
-                "displayName": "first_name",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string"
-              },
-              {
-                "id": "has_voice",
-                "displayName": "has_voice",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "boolean"
-              },
-              {
-                "id": "file_id",
-                "displayName": "file_id",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string"
-              },
-              {
-                "id": "is_contact",
-                "displayName": "is_contact",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "boolean"
-              },
-              {
-                "id": "contact_phone",
-                "displayName": "contact_phone",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string"
-              },
-              {
-                "id": "is_button",
-                "displayName": "is_button",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "boolean"
-              },
-              {
-                "id": "chat_id",
-                "displayName": "chat_id",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string"
-              },
-              {
-                "id": "message_id",
-                "displayName": "message_id",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string"
-              }
-            ],
-            "attemptToConvertTypes": false,
-            "convertFieldsToString": true
-          },
-          "options": {}
-        },
-        "type": "n8n-nodes-base.executeWorkflow",
-        "typeVersion": 1.3,
-        "position": [
-          -1792,
-          1456
-        ],
-        "id": "943d72eb-da42-4de7-a31f-edd4f1cbbbdd",
-        "name": "Call Middleware",
-        "alwaysOutputData": true
-      },
-      {
-        "parameters": {
-          "workflowId": {
-            "__rl": true,
             "value": "GmInc0tYXj4ZR4kM",
             "mode": "list",
             "cachedResultUrl": "/workflow/GmInc0tYXj4ZR4kM",
@@ -1723,12 +1523,13 @@
           "workflowInputs": {
             "mappingMode": "defineBelow",
             "value": {
-              "action": "START",
-              "telegram_id": "={{ $json.telegram_id }}",
-              "chat_id": "={{ $json.chat_id }}",
-              "first_name": "={{ $json.first_name }}",
-              "input_text": "={{ $json.input_text }}",
-              "context": "={{ $json.context }}"
+              "action": "start",
+              "chat_id": "={{ $node[\"Format Telegram Input\"].json.chat_id }}",
+              "context": "={{ $node['Supabase: Global Context Gateway'].json }}",
+              "first_name": "={{ $node[\"Format Telegram Input\"].json.first_name }}",
+              "input_text": "={{ $node[\"Format Telegram Input\"].json.input_text }}",
+              "message_id": "={{ $node[\"Format Telegram Input\"].json.message_id }}",
+              "telegram_id": "={{ $node[\"Format Telegram Input\"].json.telegram_id }}"
             },
             "matchingColumns": [],
             "schema": [
@@ -1739,8 +1540,7 @@
                 "defaultMatch": false,
                 "display": true,
                 "canBeUsedToMatch": true,
-                "type": "string",
-                "removed": false
+                "type": "string"
               },
               {
                 "id": "telegram_id",
@@ -1749,8 +1549,7 @@
                 "defaultMatch": false,
                 "display": true,
                 "canBeUsedToMatch": true,
-                "type": "string",
-                "removed": false
+                "type": "string"
               },
               {
                 "id": "chat_id",
@@ -1759,8 +1558,7 @@
                 "defaultMatch": false,
                 "display": true,
                 "canBeUsedToMatch": true,
-                "type": "string",
-                "removed": false
+                "type": "string"
               },
               {
                 "id": "first_name",
@@ -1769,8 +1567,7 @@
                 "defaultMatch": false,
                 "display": true,
                 "canBeUsedToMatch": true,
-                "type": "string",
-                "removed": false
+                "type": "string"
               },
               {
                 "id": "input_text",
@@ -1779,8 +1576,7 @@
                 "defaultMatch": false,
                 "display": true,
                 "canBeUsedToMatch": true,
-                "type": "string",
-                "removed": false
+                "type": "string"
               },
               {
                 "id": "contact_phone",
@@ -1791,108 +1587,6 @@
                 "canBeUsedToMatch": true,
                 "type": "string",
                 "removed": true
-              },
-              {
-                "id": "context",
-                "displayName": "context",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "object",
-                "removed": false
-              }
-            ],
-            "attemptToConvertTypes": false,
-            "convertFieldsToString": true
-          },
-          "options": {}
-        },
-        "type": "n8n-nodes-base.executeWorkflow",
-        "typeVersion": 1.3,
-        "position": [
-          144,
-          1072
-        ],
-        "id": "a430168c-12d7-4bd6-a5e8-678806994e45",
-        "name": "Call: Identity (START)"
-      },
-      {
-        "parameters": {
-          "workflowId": {
-            "__rl": true,
-            "value": "GmInc0tYXj4ZR4kM",
-            "mode": "list",
-            "cachedResultUrl": "/workflow/GmInc0tYXj4ZR4kM",
-            "cachedResultName": "SW-1: Identity & Onboarding"
-          },
-          "workflowInputs": {
-            "mappingMode": "defineBelow",
-            "value": {
-              "action": "SET_LANGUAGE",
-              "telegram_id": "={{$json.telegram_id.toString()}}",
-              "chat_id": "={{$json.chat_id.toString()}}",
-              "input_text": "={{$json.input_text}}",
-              "contact_phone": "={{$json.contact_phone}}",
-              "context": "={{ $json.context}}",
-              "message_id": "={{ $('Call Middleware').item.json.message_id }}",
-              "first_name": "={{$json.first_name}}"
-            },
-            "matchingColumns": [],
-            "schema": [
-              {
-                "id": "action",
-                "displayName": "action",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string"
-              },
-              {
-                "id": "telegram_id",
-                "displayName": "telegram_id",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string"
-              },
-              {
-                "id": "chat_id",
-                "displayName": "chat_id",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string"
-              },
-              {
-                "id": "first_name",
-                "displayName": "first_name",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string"
-              },
-              {
-                "id": "input_text",
-                "displayName": "input_text",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string"
-              },
-              {
-                "id": "contact_phone",
-                "displayName": "contact_phone",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string"
               },
               {
                 "id": "context",
@@ -1910,54 +1604,54 @@
                 "defaultMatch": false,
                 "display": true,
                 "canBeUsedToMatch": true,
-                "type": "string",
-                "removed": false
+                "type": "string"
               }
             ],
             "attemptToConvertTypes": false,
             "convertFieldsToString": true
           },
-          "options": {}
+          "options": {
+            "waitForSubWorkflow": false
+          }
         },
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.3,
         "position": [
-          160,
-          1264
+          -704,
+          1648
         ],
-        "id": "ddd1e27c-982d-4ee1-92f9-127d1bad7abd",
-        "name": "Call: Identity (SET LANGUAGE)"
+        "id": "a430168c-12d7-4bd6-a5e8-678806994e45",
+        "name": "Call: Identity (START)",
+        "alwaysOutputData": true
       },
       {
         "parameters": {
           "workflowId": {
             "__rl": true,
-            "value": "GmInc0tYXj4ZR4kM",
+            "value": "QciYupwAd2AZ6IEf",
             "mode": "list",
-            "cachedResultUrl": "/workflow/GmInc0tYXj4ZR4kM",
-            "cachedResultName": "SW-1: Identity & Onboarding"
+            "cachedResultUrl": "/workflow/QciYupwAd2AZ6IEf",
+            "cachedResultName": "SW-3: Mission Control"
           },
           "workflowInputs": {
             "mappingMode": "defineBelow",
             "value": {
-              "action": "VINCULATE",
-              "telegram_id": "={{ $json.telegram_id }}",
-              "first_name": "={{ $json.first_name }}",
-              "chat_id": "={{ $json.chat_id }}",
-              "input_text": "={{ $json.input_text }}",
-              "context": "={{ $json.context }}"
+              "chat_id": "={{ $('Format Telegram Input').item.json.chat_id.toString() }}",
+              "telegram_id": "={{ $('Format Telegram Input').item.json.telegram_id.toString() }}",
+              "callback_data": "={{ $('Format Telegram Input').item.json.input_text }}",
+              "context": "={{ $node['Supabase: Global Context Gateway'].json }}",
+              "message_id": "={{ $('Format Telegram Input').item.json.message_id }}"
             },
             "matchingColumns": [],
             "schema": [
               {
-                "id": "action",
-                "displayName": "action",
+                "id": "chat_id",
+                "displayName": "chat_id",
                 "required": false,
                 "defaultMatch": false,
                 "display": true,
                 "canBeUsedToMatch": true,
-                "type": "string",
-                "removed": false
+                "type": "string"
               },
               {
                 "id": "telegram_id",
@@ -1966,57 +1660,16 @@
                 "defaultMatch": false,
                 "display": true,
                 "canBeUsedToMatch": true,
-                "type": "string",
-                "removed": false
+                "type": "string"
               },
               {
-                "id": "chat_id",
-                "displayName": "chat_id",
+                "id": "callback_data",
+                "displayName": "callback_data",
                 "required": false,
                 "defaultMatch": false,
                 "display": true,
                 "canBeUsedToMatch": true,
                 "type": "string",
-                "removed": false
-              },
-              {
-                "id": "first_name",
-                "displayName": "first_name",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string",
-                "removed": false
-              },
-              {
-                "id": "input_text",
-                "displayName": "input_text",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string",
-                "removed": false
-              },
-              {
-                "id": "contact_phone",
-                "displayName": "contact_phone",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string",
-                "removed": true
-              },
-              {
-                "id": "context",
-                "displayName": "context",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "object",
                 "removed": false
               },
               {
@@ -2027,6 +1680,26 @@
                 "display": true,
                 "canBeUsedToMatch": true,
                 "type": "string",
+                "removed": false
+              },
+              {
+                "id": "context",
+                "displayName": "context",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "type": "object",
+                "removed": false
+              },
+              {
+                "id": "markup_type",
+                "displayName": "markup_type",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "type": "string",
                 "removed": true
               }
             ],
@@ -2035,14 +1708,15 @@
           },
           "options": {}
         },
+        "id": "6bf8b7f4-fa97-4b12-a999-0800d001152f_new",
+        "name": "Call : Mission Control",
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.3,
         "position": [
-          144,
-          1488
+          -832,
+          2224
         ],
-        "id": "eaa14841-398d-4a48-a758-c7cc3daa866d",
-        "name": "Call: Identity (VINCULATE)1"
+        "alwaysOutputData": true
       },
       {
         "parameters": {
@@ -2056,13 +1730,13 @@
           "workflowInputs": {
             "mappingMode": "defineBelow",
             "value": {
-              "action": "CONTACT",
-              "telegram_id": "={{ $json.telegram_id}}",
-              "chat_id": "={{ $json.chat_id }}",
-              "first_name": "={{ $('Telegram Trigger').item.json.message.chat.first_name }}",
-              "input_text": "={{ $('Telegram Trigger').item.json.message.text }}",
-              "context": "={{ $json.context }}",
-              "contact_phone": "={{ $json.contact_phone }}"
+              "action": "set_language",
+              "telegram_id": "={{ $node[\"Supabase: Global Context Gateway\"].json.user?.id || $node[\"Format Telegram Input\"].json.telegram_id.toString() }}",
+              "chat_id": "={{ $node[\"Format Telegram Input\"].json.chat_id.toString() }}",
+              "first_name": "={{ $node[\"Format Telegram Input\"].json.first_name }}",
+              "input_text": "={{ $node[\"Format Telegram Input\"].json.input_text.trim() }}",
+              "context": "={{ $node[\"Supabase: Global Context Gateway\"].json }}",
+              "message_id": "={{ $node[\"Format Telegram Input\"].json.message_id }}"
             },
             "matchingColumns": [],
             "schema": [
@@ -2073,8 +1747,7 @@
                 "defaultMatch": false,
                 "display": true,
                 "canBeUsedToMatch": true,
-                "type": "string",
-                "removed": false
+                "type": "string"
               },
               {
                 "id": "telegram_id",
@@ -2083,8 +1756,7 @@
                 "defaultMatch": false,
                 "display": true,
                 "canBeUsedToMatch": true,
-                "type": "string",
-                "removed": false
+                "type": "string"
               },
               {
                 "id": "chat_id",
@@ -2093,8 +1765,7 @@
                 "defaultMatch": false,
                 "display": true,
                 "canBeUsedToMatch": true,
-                "type": "string",
-                "removed": false
+                "type": "string"
               },
               {
                 "id": "first_name",
@@ -2103,8 +1774,7 @@
                 "defaultMatch": false,
                 "display": true,
                 "canBeUsedToMatch": true,
-                "type": "string",
-                "removed": false
+                "type": "string"
               },
               {
                 "id": "input_text",
@@ -2113,8 +1783,232 @@
                 "defaultMatch": false,
                 "display": true,
                 "canBeUsedToMatch": true,
+                "type": "string"
+              },
+              {
+                "id": "contact_phone",
+                "displayName": "contact_phone",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
                 "type": "string",
-                "removed": false
+                "removed": true
+              },
+              {
+                "id": "context",
+                "displayName": "context",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "type": "object"
+              },
+              {
+                "id": "message_id",
+                "displayName": "message_id",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "type": "string"
+              }
+            ],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
+        },
+        "id": "ddd1e27c-982d-4ee1-92f9-127d1bad7abd_new",
+        "name": "Call: Identity (SET LANGUAGE)",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.3,
+        "position": [
+          -736,
+          1200
+        ],
+        "alwaysOutputData": true
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "GmInc0tYXj4ZR4kM",
+            "mode": "list",
+            "cachedResultUrl": "/workflow/GmInc0tYXj4ZR4kM",
+            "cachedResultName": "SW-1: Identity & Onboarding"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "action": "vinculate",
+              "chat_id": "={{ $('Format Telegram Input').item.json.chat_id.toString() }}",
+              "context": "={{ $node['Supabase: Global Context Gateway'].json }}",
+              "first_name": "={{ $('Format Telegram Input').item.json.first_name }}",
+              "input_text": "={{ $('Format Telegram Input').item.json.input_text }}",
+              "message_id": "={{ $('Format Telegram Input').item.json.message_id }}",
+              "telegram_id": "={{ $('Format Telegram Input').item.json.telegram_id.toString()}}"
+            },
+            "matchingColumns": [],
+            "schema": [
+              {
+                "id": "action",
+                "displayName": "action",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "type": "string"
+              },
+              {
+                "id": "telegram_id",
+                "displayName": "telegram_id",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "type": "string"
+              },
+              {
+                "id": "chat_id",
+                "displayName": "chat_id",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "type": "string"
+              },
+              {
+                "id": "first_name",
+                "displayName": "first_name",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "type": "string"
+              },
+              {
+                "id": "input_text",
+                "displayName": "input_text",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "type": "string"
+              },
+              {
+                "id": "contact_phone",
+                "displayName": "contact_phone",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "type": "string",
+                "removed": true
+              },
+              {
+                "id": "context",
+                "displayName": "context",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "type": "object"
+              },
+              {
+                "id": "message_id",
+                "displayName": "message_id",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "type": "string"
+              }
+            ],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {
+            "waitForSubWorkflow": false
+          }
+        },
+        "id": "eaa14841-398d-4a48-a758-c7cc3daa866d_new",
+        "name": "Call: Identity (VINCULATE)1",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.3,
+        "position": [
+          -720,
+          1456
+        ],
+        "alwaysOutputData": true
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "GmInc0tYXj4ZR4kM",
+            "mode": "list",
+            "cachedResultUrl": "/workflow/GmInc0tYXj4ZR4kM",
+            "cachedResultName": "SW-1: Identity & Onboarding"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "action": "contact",
+              "chat_id": "={{ $node['Format Telegram Input'].json.chat_id.toString() }}",
+              "context": "={{ $node['Supabase: Global Context Gateway'].json }}",
+              "first_name": "={{ $node['Format Telegram Input'].json.first_name }}",
+              "input_text": "={{ $node['Format Telegram Input'].json.input_text }}",
+              "message_id": "={{ $node['Format Telegram Input'].json.message_id }}",
+              "telegram_id": "={{ $node['Format Telegram Input'].json.telegram_id.toString() }}",
+              "contact_phone": "={{ $node['Format Telegram Input'].json.contact_phone }}"
+            },
+            "matchingColumns": [],
+            "schema": [
+              {
+                "id": "action",
+                "displayName": "action",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "type": "string"
+              },
+              {
+                "id": "telegram_id",
+                "displayName": "telegram_id",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "type": "string"
+              },
+              {
+                "id": "chat_id",
+                "displayName": "chat_id",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "type": "string"
+              },
+              {
+                "id": "first_name",
+                "displayName": "first_name",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "type": "string"
+              },
+              {
+                "id": "input_text",
+                "displayName": "input_text",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "type": "string"
               },
               {
                 "id": "contact_phone",
@@ -2133,23 +2027,34 @@
                 "defaultMatch": false,
                 "display": true,
                 "canBeUsedToMatch": true,
-                "type": "object",
-                "removed": false
+                "type": "object"
+              },
+              {
+                "id": "message_id",
+                "displayName": "message_id",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "type": "string"
               }
             ],
             "attemptToConvertTypes": false,
             "convertFieldsToString": true
           },
-          "options": {}
+          "options": {
+            "waitForSubWorkflow": false
+          }
         },
+        "id": "7e09cea8-ae7c-41c0-b79d-aa4e2f4ad762_new",
+        "name": "Call: Identity (CONTACT)",
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.3,
         "position": [
-          144,
-          1696
+          -656,
+          1840
         ],
-        "id": "7e09cea8-ae7c-41c0-b79d-aa4e2f4ad762",
-        "name": "Call: Identity (CONTACT)"
+        "alwaysOutputData": true
       },
       {
         "parameters": {
@@ -2163,25 +2068,15 @@
           "workflowInputs": {
             "mappingMode": "defineBelow",
             "value": {
-              "has_voice": "={{ $('Call Middleware').item.json.has_voice }}",
-              "telegram_id": "={{ $('Call Middleware').item.json.telegram_id.toString() }}",
-              "chat_id": "={{ $('Call Middleware').item.json.chat_id.toString()}}",
-              "input_text": "={{ $('Call Middleware').item.json.input_text }}",
-              "file_id": "={{ $('Call Middleware').item.json.file_id }}",
-              "context": "={{ $('Call Middleware').item.json.context }}"
+              "chat_id": "={{ $('Format Telegram Input').item.json.chat_id.toString() }}",
+              "context": "={{ $node['Supabase: Global Context Gateway'].json }}",
+              "input_text": "={{ $('Format Telegram Input').item.json.input_text }}",
+              "telegram_id": "={{ $('Format Telegram Input').item.json.telegram_id.toString() }}",
+              "has_voice": "={{ $('Format Telegram Input').item.json.has_voice }}",
+              "file_id": "={{ $('Format Telegram Input').item.json.file_id }}"
             },
             "matchingColumns": [],
             "schema": [
-              {
-                "id": "telegram_id",
-                "displayName": "telegram_id",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string",
-                "removed": false
-              },
               {
                 "id": "chat_id",
                 "displayName": "chat_id",
@@ -2189,8 +2084,16 @@
                 "defaultMatch": false,
                 "display": true,
                 "canBeUsedToMatch": true,
-                "type": "string",
-                "removed": false
+                "type": "string"
+              },
+              {
+                "id": "telegram_id",
+                "displayName": "telegram_id",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "type": "string"
               },
               {
                 "id": "input_text",
@@ -2199,8 +2102,7 @@
                 "defaultMatch": false,
                 "display": true,
                 "canBeUsedToMatch": true,
-                "type": "string",
-                "removed": false
+                "type": "string"
               },
               {
                 "id": "has_voice",
@@ -2223,14 +2125,33 @@
                 "removed": false
               },
               {
+                "id": "is_button",
+                "displayName": "is_button",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "type": "boolean",
+                "removed": true
+              },
+              {
                 "id": "context",
                 "displayName": "context",
                 "required": false,
                 "defaultMatch": false,
                 "display": true,
                 "canBeUsedToMatch": true,
-                "type": "object",
-                "removed": false
+                "type": "object"
+              },
+              {
+                "id": "telegram_token",
+                "displayName": "telegram_token",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "canBeUsedToMatch": true,
+                "type": "string",
+                "removed": true
               }
             ],
             "attemptToConvertTypes": false,
@@ -2238,26 +2159,221 @@
           },
           "options": {}
         },
+        "id": "5df12530-6765-4dca-9a28-6eb55f36f56d_new",
+        "name": "Call: Cognitive Engine (ASYNC)",
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.3,
         "position": [
-          432,
-          1856
+          -624,
+          2016
+        ]
+      },
+      {
+        "parameters": {
+          "chatId": "={{ $node[\"Format Telegram Input\"].json.chat_id }}",
+          "text": "={{ $('Supabase: Global Context Gateway').item.json.translations['msg_wait_thinking '] }}\n",
+          "additionalFields": {
+            "appendAttribution": false
+          }
+        },
+        "type": "n8n-nodes-base.telegram",
+        "typeVersion": 1.2,
+        "position": [
+          -880,
+          2016
         ],
-        "id": "5df12530-6765-4dca-9a28-6eb55f36f56d",
-        "name": "Call: Cognitive Engine (ASYNC)"
+        "id": "3400a44e-0b44-4288-9eaf-4024bbc9060a",
+        "name": "Send a text message",
+        "webhookId": "ce766f98-7438-415a-92a3-8f07644c9ee6",
+        "credentials": {
+          "telegramApi": {
+            "id": "R6pSyertWWs11XEK",
+            "name": "Telegram_Token"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "a1452319-a415-42ec-b75a-4ea9875da017",
+                "name": "telegram_id",
+                "value": "={{ $json.message?.from?.id || $json.callback_query?.from?.id }}",
+                "type": "string"
+              },
+              {
+                "id": "f3103809-2930-477c-9f42-9ff148bf7810",
+                "name": "chat_id",
+                "value": "={{ $json.message?.chat?.id || $json.callback_query?.message?.chat?.id }}",
+                "type": "string"
+              },
+              {
+                "id": "f01cb432-8e64-483e-af90-0eb0c2af0562",
+                "name": "first_name",
+                "value": "={{ $json.message?.from?.first_name || $json.callback_query?.from?.first_name }}",
+                "type": "string"
+              },
+              {
+                "id": "02c4e5cc-a414-4108-befc-773e4091baec",
+                "name": "input_text",
+                "value": "= {{ $json.message?.text || $json.callback_query?.data || \"\" }}",
+                "type": "string"
+              },
+              {
+                "id": "5efb5004-0f4e-4887-ad75-3ec531ec0bdc",
+                "name": "message_id",
+                "value": "={{ $json.message?.message_id || $json.callback_query?.message?.message_id }}",
+                "type": "string"
+              },
+              {
+                "id": "b03ef519-9c0f-453b-ac65-2d07c0804de2",
+                "name": "is_button",
+                "value": "={{!!$json.callback_query}}",
+                "type": "boolean"
+              },
+              {
+                "id": "f10e3187-b932-4e53-abcc-d9f00965b5aa",
+                "name": "has_voice",
+                "value": "={{!!$json.message?.voice}}",
+                "type": "boolean"
+              },
+              {
+                "id": "9e9327fe-6036-43cf-98a8-3f08989ec1ba",
+                "name": "=is_contact",
+                "value": "={{ !!$json.message?.contact }}",
+                "type": "string"
+              },
+              {
+                "id": "c08a4039-fc5e-4fc9-8c86-bc5ba3b8f7c9",
+                "name": "contact_phone",
+                "value": "={{ $json.message?.contact?.phone_number || \"\" }}",
+                "type": "string"
+              },
+              {
+                "id": "b44ed984-c69c-49a7-9afb-38e572625c6c",
+                "name": "file_id",
+                "value": "={{ $json.message?.voice?.file_id || \"\" }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          -3136,
+          1520
+        ],
+        "id": "13258123-3076-40dd-8996-4ad83d638f7e",
+        "name": "Format Telegram Input"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://rncmxbvrxglbdcagiltc.supabase.co/rest/v1/rpc/get_bot_context",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "httpMultipleHeadersAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Accept-Profile",
+                "value": "mindops"
+              },
+              {
+                "name": "Content-Profile",
+                "value": "mindops"
+              }
+            ]
+          },
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "p_user_id",
+                "value": "={{ $('Format Telegram Input').item.json.telegram_id }}"
+              },
+              {
+                "name": "p_prefered_lang",
+                "value": "={{ $json.prefered_lang }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.4,
+        "position": [
+          -2688,
+          1552
+        ],
+        "id": "029ced7d-451d-47ad-847f-57667a329e52",
+        "name": "Supabase: Global Context Gateway",
+        "credentials": {
+          "httpMultipleHeadersAuth": {
+            "id": "9KY2AHXMXRxyjGim",
+            "name": "Supabase"
+          }
+        },
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "jsCode": "const item = $input.first().json;\nconst inputText = (item.input_text || '').trim();\nconst preferedLang = inputText.startsWith('lang_') \n  ? inputText.substring(5) \n  : '';\n\nreturn [{\n  json: {\n    ...item,\n    prefered_lang: preferedLang\n  }\n}];\n"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -2912,
+          1536
+        ],
+        "id": "df49e511-50a3-41b2-a6f5-caf5dfb5a7fc",
+        "name": "Extract language"
+      },
+      {
+        "parameters": {
+          "content": "##  Error Handling",
+          "height": 320,
+          "width": 368,
+          "color": 3
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -2208,
+          2128
+        ],
+        "typeVersion": 1,
+        "id": "0ea3eedd-620f-4596-af25-a7b8423395f3",
+        "name": "Sticky Note"
+      },
+      {
+        "parameters": {
+          "chatId": "={{ $('Format Telegram Input').item.json.chat_id }}",
+          "text": "={{ $('Supabase: Global Context Gateway').item.json.translations?.error_message_onboarding}}",
+          "additionalFields": {}
+        },
+        "type": "n8n-nodes-base.telegram",
+        "typeVersion": 1.2,
+        "position": [
+          -2112,
+          2240
+        ],
+        "id": "e078fbaf-772e-4ec0-ac5e-0a9a45897981",
+        "name": "Error message",
+        "webhookId": "dd07f348-a5c7-44d9-aa8f-c77d52d7f325",
+        "credentials": {
+          "telegramApi": {
+            "id": "R6pSyertWWs11XEK",
+            "name": "Telegram_Token"
+          }
+        }
       }
     ],
     "connections": {
       "Main Router": {
         "main": [
-          [
-            {
-              "node": "Call: Identity (START)",
-              "type": "main",
-              "index": 0
-            }
-          ],
           [
             {
               "node": "Call: Identity (SET LANGUAGE)",
@@ -2274,6 +2390,13 @@
           ],
           [
             {
+              "node": "Call: Identity (START)",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
               "node": "Call: Identity (CONTACT)",
               "type": "main",
               "index": 0
@@ -2281,7 +2404,7 @@
           ],
           [
             {
-              "node": "Send Wait Message",
+              "node": "Send a text message",
               "type": "main",
               "index": 0
             }
@@ -2295,7 +2418,18 @@
           ]
         ]
       },
-      "Send Wait Message": {
+      "Telegram Trigger": {
+        "main": [
+          [
+            {
+              "node": "Format Telegram Input",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send a text message": {
         "main": [
           [
             {
@@ -2306,18 +2440,18 @@
           ]
         ]
       },
-      "Telegram Trigger": {
+      "Format Telegram Input": {
         "main": [
           [
             {
-              "node": "Call Middleware",
+              "node": "Extract language",
               "type": "main",
               "index": 0
             }
           ]
         ]
       },
-      "Call Middleware": {
+      "Supabase: Global Context Gateway": {
         "main": [
           [
             {
@@ -2325,25 +2459,48 @@
               "type": "main",
               "index": 0
             }
+          ],
+          [
+            {
+              "node": "Error message",
+              "type": "main",
+              "index": 0
+            }
           ]
         ]
       },
-      "Call: Cognitive Engine (ASYNC)": {
+      "Call: Identity (SET LANGUAGE)": {
+        "main": [
+          []
+        ]
+      },
+      "Extract language": {
+        "main": [
+          [
+            {
+              "node": "Supabase: Global Context Gateway",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call: Identity (START)": {
         "main": [
           []
         ]
       }
     },
     "authors": "Alejandra Ocampo",
-    "name": "Version 08065616",
+    "name": "Version 3936237c",
     "description": "",
     "autosaved": true,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-03-18T19:35:46.776Z",
-        "id": 270,
+        "createdAt": "2026-04-01T03:12:53.254Z",
+        "id": 743,
         "workflowId": "cO9M1BtWC9im653l",
-        "versionId": "08065616-55d4-421d-beb7-5eb97bb57ba6",
+        "versionId": "3936237c-d7f3-4209-bf5f-55a7c52a3203",
         "event": "activated",
         "userId": "fae80fe0-db88-411b-b8e7-f61d64004d4e"
       }

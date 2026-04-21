@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-03-20T19:50:41.987Z",
+  "updatedAt": "2026-04-06T18:13:08.907Z",
   "createdAt": "2026-02-22T02:00:58.915Z",
   "id": "zc8E5ZfPENEx6Css",
   "name": "SW-2: Cognitive engine",
@@ -12,10 +12,10 @@
         "workflowInputs": {
           "values": [
             {
-              "name": "telegram_id"
+              "name": "chat_id"
             },
             {
-              "name": "chat_id"
+              "name": "telegram_id"
             },
             {
               "name": "input_text"
@@ -26,6 +26,10 @@
             },
             {
               "name": "file_id"
+            },
+            {
+              "name": "is_button",
+              "type": "boolean"
             },
             {
               "name": "context",
@@ -163,7 +167,7 @@
     {
       "parameters": {},
       "type": "n8n-nodes-base.merge",
-      "typeVersion": 3,
+      "typeVersion": 3.2,
       "position": [
         272,
         0
@@ -194,8 +198,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        2000,
-        -48
+        1056,
+        -32
       ],
       "id": "b298b5bc-2a45-4e49-8698-864a1eaeb490",
       "name": "Generate Embeddings",
@@ -239,8 +243,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        2256,
-        -64
+        1344,
+        -176
       ],
       "id": "e344d54b-fdfb-4717-aea7-7b0cfca2e40f",
       "name": "Query RAG (Supabase)",
@@ -255,61 +259,28 @@
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.all();\n\n// 1. Extract memories from RAG\nconst memories = items\n  .map(item => item.json.content || item.json.raw_content)\n  .filter(c => c && c.trim() !== \"\")\n  .join(' | ');\n\n// 2. Get current thought and embedding vector\nconst currentThought = $('Merge Streams').item.json.final_thought;\nconst currentVector = $('Generate Embeddings').item.json.embedding.values;\n\n// 3. Get localized prompt and inject user data\nconst lang = $('Strict Entry (Brain)').item.json.context.language || 'es';\nconst promptData = $('Get Brain Prompts').first().json;\nlet fullPrompt = promptData[lang] || \"\";\n\n// 4. Replace placeholders now that we have all the data\nconst historical = memories || \"No previous history.\";\nfullPrompt = fullPrompt.replace('{{historical_context}}', historical);\nfullPrompt = fullPrompt.replace('{{user_thought}}', currentThought);\n\nreturn [{\n  json: {\n    final_thought: currentThought,\n    historical_context: historical,\n    embedding_vector: currentVector,\n    final_prompt: fullPrompt\n  }\n}];"
+        "jsCode": "const items = $input.all();\n\nconst memories = items\n  .map(item => item.json.content || item.json.raw_content)\n  .filter(c => c && c.trim() !== \"\")\n  .join(' | ');\n\nconst currentThought = $('Merge Streams').item.json.final_thought;\nconst currentVector = $('Generate Embeddings').item.json.embedding.values;\n\nlet fullPrompt = $('Select Localized Prompt').item.json.final_prompt || \"\";\n\n\nconst historical = memories || \"No previous history.\";\nfullPrompt = fullPrompt.replace('{{historical_context}}', historical);\nfullPrompt = fullPrompt.replace('{{user_thought}}', currentThought);\n\nreturn [{\n  json: {\n    final_thought: currentThought,\n    historical_context: historical,\n    embedding_vector: currentVector,\n    final_prompt: fullPrompt\n  }\n}];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2576,
-        -80
+        1680,
+        -192
       ],
       "id": "7ac07056-ae5b-4d7f-8eba-f7a496f214a8",
       "name": "Format Memory Context"
     },
     {
       "parameters": {
-        "url": "=https://rncmxbvrxglbdcagiltc.supabase.co/rest/v1/profiles?telegram_id=eq.{{ $('Strict Entry (Brain)').item.json.telegram_id }}&select=id",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "httpMultipleHeadersAuth",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Accept-Profile",
-              "value": "mindops"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [
-        1024,
-        -80
-      ],
-      "id": "09d58e07-9644-4a85-95a3-f0a7b9aa6735",
-      "name": "Get Profile UUID",
-      "alwaysOutputData": true,
-      "credentials": {
-        "httpMultipleHeadersAuth": {
-          "id": "9KY2AHXMXRxyjGim",
-          "name": "Supabase"
-        }
-      },
-      "onError": "continueErrorOutput"
-    },
-    {
-      "parameters": {
         "promptType": "define",
-        "text": "={{ $node[\"Select Localized Prompt\"].json.final_prompt }}",
+        "text": "={{ $('Format Memory Context').item.json.final_prompt }}",
         "hasOutputParser": true
       },
       "type": "@n8n/n8n-nodes-langchain.chainLlm",
       "typeVersion": 1.4,
       "position": [
-        3024,
-        -112
+        1952,
+        -128
       ],
       "id": "a9cf4a7a-8174-4a0d-b145-1099c9a57f5b",
       "name": "MindOps Brain (LLM)"
@@ -319,10 +290,10 @@
         "jsonSchemaExample": "{\n  \"summary_title\": \"string (3 words)\",\n  \"friction_tag\": \"🔴 CRITICAL (Stall) | 🟡 DENSE (Choppy) | 🟢 FLUID (Flow)\",\n  \"friction_score\": 90,\n  \"system_mode\": \"PROTECTION | EXECUTION\",\n  \"strategic_insight\": \"string (Contextual analysis based on RAG)\",\n  \"voice_script\": \"string (Max 45 words script to be spoken by Twilio if the user gets stuck)\",\n  \"action_plan\": [\n    {\n      \"time\": \"string (Suggested time)\",\n      \"task\": \"string (Atomic physical step < 5 min)\"\n    }\n  ]\n}"
       },
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
-      "typeVersion": 1.2,
+      "typeVersion": 1.3,
       "position": [
-        3200,
-        224
+        2112,
+        208
       ],
       "id": "8fcf49e7-8fa5-4546-ba80-e9abda263c2a",
       "name": "JSON Schema Parser"
@@ -330,7 +301,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://rncmxbvrxglbdcagiltc.supabase.co/rest/v1/thoughts",
+        "url": "https://rncmxbvrxglbdcagiltc.supabase.co/rest/v1/thoughts",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "httpMultipleHeadersAuth",
         "sendHeaders": true,
@@ -341,8 +312,8 @@
               "value": "mindops"
             },
             {
-              "name": "Prefer",
-              "value": "return=representation"
+              "name": "Accept-Profile",
+              "value": "mindops"
             }
           ]
         },
@@ -351,7 +322,7 @@
           "parameters": [
             {
               "name": "user_id",
-              "value": "={{ $('Get Profile UUID').first().json.id }}"
+              "value": "={{ $('Strict Entry (Brain)').item.json.context.user.id }}"
             },
             {
               "name": "summary_title",
@@ -390,7 +361,7 @@
               "value": "={{ $('Format Memory Context').first().json.embedding_vector }}"
             },
             {
-              "name": "=raw_content",
+              "name": "raw_content",
               "value": "={{ $('Format Memory Context').first().json.final_thought }}"
             }
           ]
@@ -400,8 +371,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        3616,
-        -16
+        2544,
+        -96
       ],
       "id": "cfcdc020-f16d-4a1f-b49a-c228c2da73a5",
       "name": "Save PROPOSED Mission",
@@ -421,8 +392,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1,
       "position": [
-        3008,
-        192
+        1936,
+        224
       ],
       "id": "8b14863b-6a59-42bc-abf2-1a8141cf171f",
       "name": "Google Gemini Chat Model",
@@ -432,425 +403,6 @@
           "name": "Google Gemini(PaLM) Api account"
         }
       }
-    },
-    {
-      "parameters": {
-        "workflowId": {
-          "__rl": true,
-          "value": "zZYZA8aKwUckaap4",
-          "mode": "list",
-          "cachedResultUrl": "/workflow/zZYZA8aKwUckaap4",
-          "cachedResultName": "SW-5:Message telegram"
-        },
-        "workflowInputs": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "chat_id": "={{ $('Strict Entry (Brain)').item.json.chat_id }}",
-            "text": "={{ \n  $('Strict Entry (Brain)').item.json.context.translations.message_proposal\n    .replace('{friction_tag}', $('MindOps Brain (LLM)').item.json.output.friction_tag)\n    .replace('{strategic_insight}', $('MindOps Brain (LLM)').item.json.output.strategic_insight)\n    .replace('{action_plan}', $('MindOps Brain (LLM)').item.json.output.action_plan.map(p => \"🕒 \" + p.time + \" | \" + p.task).join('\\n'))\n}}",
-            "markup_type": "inlineKeyboard",
-            "keyboard_data": "={{ [[\n  { \"text\": $('Strict Entry (Brain)').item.json.context.translations.btn_mission_activate, \"callback_data\": \"plan_ok\" },\n  { \"text\": $('Strict Entry (Brain)').item.json.context.translations.btn_mission_readjust, \"callback_data\": \"plan_error\" }\n]] }}"
-          },
-          "matchingColumns": [],
-          "schema": [
-            {
-              "id": "chat_id",
-              "displayName": "chat_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
-            },
-            {
-              "id": "text",
-              "displayName": "text",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
-            },
-            {
-              "id": "markup_type",
-              "displayName": "markup_type",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
-            },
-            {
-              "id": "message_id",
-              "displayName": "message_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": true
-            },
-            {
-              "id": "keyboard_data",
-              "displayName": "keyboard_data",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "array",
-              "removed": false
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": true
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1.3,
-      "position": [
-        4128,
-        -48
-      ],
-      "id": "c48047db-6ca4-4d65-b36b-bef793578c7a",
-      "name": "Send Proposal and Buttons"
-    },
-    {
-      "parameters": {
-        "workflowId": {
-          "__rl": true,
-          "value": "zZYZA8aKwUckaap4",
-          "mode": "list",
-          "cachedResultUrl": "/workflow/zZYZA8aKwUckaap4",
-          "cachedResultName": "SW-5:Message telegram"
-        },
-        "workflowInputs": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "chat_id": "={{ $('Strict Entry (Brain)').item.json.chat_id }}",
-            "text": "={{ $('Strict Entry (Brain)').item.json.context.translations.error_message_mission }}"
-          },
-          "matchingColumns": [],
-          "schema": [
-            {
-              "id": "chat_id",
-              "displayName": "chat_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "text",
-              "displayName": "text",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "markup_type",
-              "displayName": "markup_type",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": true
-            },
-            {
-              "id": "message_id",
-              "displayName": "message_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": true
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": true
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1.3,
-      "position": [
-        1904,
-        848
-      ],
-      "id": "fc5fdb13-04f3-45bc-af45-2c6f11ad1fef",
-      "name": "Error Message"
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://rncmxbvrxglbdcagiltc.supabase.co/rest/v1/rpc/is_duplicate_thought",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "httpMultipleHeadersAuth",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Profile",
-              "value": "mindops"
-            },
-            {
-              "name": "Accept-Profile",
-              "value": "mindops"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"p_user_id\": \"{{ $json.id }}\",\n  \"p_text\": \"{{ $('Merge Streams').item.json.final_thought }}\"\n}",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.4,
-      "position": [
-        1264,
-        -304
-      ],
-      "id": "c603e84d-f24b-45ef-bf4f-97219f349d23",
-      "name": "Check Exact Duplicate",
-      "alwaysOutputData": true,
-      "credentials": {
-        "httpMultipleHeadersAuth": {
-          "id": "9KY2AHXMXRxyjGim",
-          "name": "Supabase"
-        }
-      },
-      "onError": "continueErrorOutput"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 3
-          },
-          "conditions": [
-            {
-              "id": "9f0eb4da-d696-4891-9237-c9f87218bd76",
-              "leftValue": "={{ $json.is_duplicate }}",
-              "rightValue": "",
-              "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
-      "position": [
-        1632,
-        -320
-      ],
-      "id": "b7fd381b-16e0-4049-843b-58361a4c10ea",
-      "name": "Is Duplicate?"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 3
-          },
-          "conditions": [
-            {
-              "id": "0ebb4b7c-97da-4a22-98b4-c2909388de9b",
-              "leftValue": "={{ $json.old_status }}",
-              "rightValue": "PROPOSED",
-              "operator": {
-                "type": "string",
-                "operation": "equals",
-                "name": "filter.operator.equals"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
-      "position": [
-        2112,
-        -368
-      ],
-      "id": "51c5b090-8dfa-4a34-87ab-1501d18c2bfc",
-      "name": "Is Status PROPOSED?"
-    },
-    {
-      "parameters": {
-        "workflowId": {
-          "__rl": true,
-          "value": "zZYZA8aKwUckaap4",
-          "mode": "list",
-          "cachedResultUrl": "/workflow/zZYZA8aKwUckaap4",
-          "cachedResultName": "SW-5:Message telegram"
-        },
-        "workflowInputs": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "chat_id": "={{ $('Strict Entry (Brain)').item.json.chat_id }}",
-            "text": "={{ \n  $('Strict Entry (Brain)').item.json.context.translations.cache_proposal\n    .replace('{old_summary_title}', $json.old_summary_title)\n    .replace('{old_strategic_insight}', $json.old_strategic_insight)\n    .replace('{old_action_plan}', $json.old_action_plan.map(p => \"🕒 \" + p.time + \" | \" + p.task).join('\\n'))\n}}\n",
-            "markup_type": "inlineKeyboard",
-            "keyboard_data": "={{ $json.keyboard }}"
-          },
-          "matchingColumns": [],
-          "schema": [
-            {
-              "id": "chat_id",
-              "displayName": "chat_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
-            },
-            {
-              "id": "text",
-              "displayName": "text",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
-            },
-            {
-              "id": "markup_type",
-              "displayName": "markup_type",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
-            },
-            {
-              "id": "message_id",
-              "displayName": "message_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": true
-            },
-            {
-              "id": "keyboard_data",
-              "displayName": "keyboard_data",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "array",
-              "removed": false
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": true
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1.3,
-      "position": [
-        2768,
-        -528
-      ],
-      "id": "419653ca-d331-4b9e-b9c5-ce2d705b81ae",
-      "name": "Send: Cached Proposal + Buttons"
-    },
-    {
-      "parameters": {
-        "workflowId": {
-          "__rl": true,
-          "value": "zZYZA8aKwUckaap4",
-          "mode": "list",
-          "cachedResultUrl": "/workflow/zZYZA8aKwUckaap4",
-          "cachedResultName": "SW-5:Message telegram"
-        },
-        "workflowInputs": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "chat_id": "={{ $('Strict Entry (Brain)').item.json.chat_id }}",
-            "text": "={{ \n  $('Strict Entry (Brain)').item.json.context.translations.duplicate_alert\n    .replace('{old_summary_title}', $json.old_summary_title)\n    .replace('{old_strategic_insight}', $json.old_strategic_insight)\n    .replace('{old_action_plan}', $json.old_action_plan.map(p => \"🕒 \" + p.time + \" | \" + p.task).join('\\n'))\n}}\n"
-          },
-          "matchingColumns": [],
-          "schema": [
-            {
-              "id": "chat_id",
-              "displayName": "chat_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
-            },
-            {
-              "id": "text",
-              "displayName": "text",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
-            },
-            {
-              "id": "markup_type",
-              "displayName": "markup_type",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": true
-            },
-            {
-              "id": "message_id",
-              "displayName": "message_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": true
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": true
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1.3,
-      "position": [
-        2784,
-        -304
-      ],
-      "id": "cfdf11b2-2c70-4cef-a094-090870e803a0",
-      "name": "Send Duplicate Alert"
     },
     {
       "parameters": {
@@ -872,7 +424,7 @@
       "parameters": {
         "content": "## PREPARE (Transcription & Prompts)",
         "height": 704,
-        "width": 1216,
+        "width": 1056,
         "color": 5
       },
       "type": "n8n-nodes-base.stickyNote",
@@ -886,22 +438,6 @@
     },
     {
       "parameters": {
-        "content": "## IDENTIFY (User & Duplicates)",
-        "height": 800,
-        "width": 912,
-        "color": 6
-      },
-      "type": "n8n-nodes-base.stickyNote",
-      "position": [
-        976,
-        -496
-      ],
-      "typeVersion": 1,
-      "id": "c610cef6-c78c-4fda-b0e4-4947a0e690cc",
-      "name": "Sticky Note3"
-    },
-    {
-      "parameters": {
         "content": "## THINK (AI & Memory)",
         "height": 1056,
         "width": 1424,
@@ -909,8 +445,8 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        1936,
-        -592
+        848,
+        -544
       ],
       "typeVersion": 1,
       "id": "24c94226-9ef4-461a-a6ec-defb231d8210",
@@ -925,8 +461,8 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        3536,
-        -320
+        2384,
+        -384
       ],
       "typeVersion": 1,
       "id": "d869c279-fbba-4e96-8cd8-06581448b2ea",
@@ -941,8 +477,8 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        1856,
-        672
+        2064,
+        752
       ],
       "typeVersion": 1,
       "id": "7d1994d0-635e-480c-bae1-9104f7133bce",
@@ -950,98 +486,85 @@
     },
     {
       "parameters": {
-        "url": "https://rncmxbvrxglbdcagiltc.supabase.co/rest/v1/prompts?key=eq.prompt_ai&select=es,en",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "httpMultipleHeadersAuth",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Content-Profile",
-              "value": "mindops"
-            },
-            {
-              "name": "Accept-Profile",
-              "value": "mindops"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.4,
-      "position": [
-        480,
-        -16
-      ],
-      "id": "70b06d79-1123-4852-8859-3cd8deba898d",
-      "name": "Get Brain Prompts",
-      "credentials": {
-        "httpMultipleHeadersAuth": {
-          "id": "9KY2AHXMXRxyjGim",
-          "name": "Supabase"
-        }
-      },
-      "onError": "continueErrorOutput"
-    },
-    {
-      "parameters": {
-        "jsCode": "const lang = $('Strict Entry (Brain)').item.json.context.language || 'es';\n\nconst promptData = $input.first().json;\nlet fullPrompt = promptData[lang] || \"\";\n\n// Estos se inyectarán después — por ahora dejamos placeholders\n// El reemplazo real ocurre en Format Memory Context\nreturn [{\n  json: {\n    final_prompt: fullPrompt,\n    debug_language: lang\n  }\n}];"
+        "jsCode": "\nconst context = $('Strict Entry (Brain)').item.json.context;\n\n\nconst lang = context.language || 'es';\n\n\nconst promptData = context.prompts.prompt_ai || {};\nconst fullPrompt = promptData[lang] || \"\";\n\nreturn [{\n  json: {\n    final_prompt: fullPrompt,\n    debug_language: lang\n  }\n}];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        800,
-        -112
+        512,
+        -32
       ],
       "id": "e6fae0f9-5d0d-4674-b9bd-eaa842f62d50",
       "name": "Select Localized Prompt"
     },
     {
       "parameters": {
-        "assignments": {
-          "assignments": [
+        "chatId": "={{ $('Strict Entry (Brain)').item.json.chat_id }}",
+        "text": "={{ \n  $('Strict Entry (Brain)').item.json.context.translations.message_proposal\n    .replace('{friction_tag}', $('MindOps Brain (LLM)').item.json.output.friction_tag)\n    .replace('{strategic_insight}', $('MindOps Brain (LLM)').item.json.output.strategic_insight)\n    .replace('{action_plan}', $('MindOps Brain (LLM)').item.json.output.action_plan.map(p => \"🕒 \" + p.time + \" | \" + p.task).join('\\n'))\n}}",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
             {
-              "id": "ced6f3d6-f414-433f-80e0-d3a843e6a2b5",
-              "name": "keyboard_data",
-              "value": "={{ JSON.stringify([[   { \"text\": $('Strict Entry (Brain)').item.json.context.translations.btn_mission_activate, \"callback_data\": \"plan_ok\" },   { \"text\": $('Strict Entry (Brain)').item.json.context.translations.btn_mission_readjust, \"callback_data\": \"plan_error\" } ]]) }}",
-              "type": "string"
+              "row": {
+                "buttons": [
+                  {
+                    "text": "={{  $('Strict Entry (Brain)').item.json.context.translations.btn_mission_activate }}",
+                    "additionalFields": {
+                      "callback_data": "plan_ok"
+                    }
+                  },
+                  {
+                    "text": "={{$('Strict Entry (Brain)').item.json.context.translations.btn_mission_readjust }}",
+                    "additionalFields": {
+                      "callback_data": "plan_error"
+                    }
+                  }
+                ]
+              }
             }
           ]
         },
-        "options": {}
+        "additionalFields": {
+          "appendAttribution": false
+        }
       },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
       "position": [
-        2464,
-        -480
+        2896,
+        -80
       ],
-      "id": "094c3b15-4d70-4032-8d47-b220c482a1cf",
-      "name": "Prepare Keyboard: Mission"
+      "id": "dd601e3f-5f4f-4ad1-88ae-23a9fef43591",
+      "name": "Send a text message",
+      "webhookId": "808a3162-1e80-4d0d-b02a-b3f385f593c3",
+      "credentials": {
+        "telegramApi": {
+          "id": "R6pSyertWWs11XEK",
+          "name": "Telegram_Token"
+        }
+      }
     },
     {
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "12e40e02-93c1-4e86-907d-f3003bb5c4a3",
-              "name": "",
-              "value": "",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
+        "chatId": "={{ $('Strict Entry (Brain)').item.json.chat_id }}",
+        "text": "={{ $('Strict Entry (Brain)').item.json.context.translations.error_message_mission }}",
+        "additionalFields": {}
       },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
       "position": [
-        2784,
-        -80
+        2208,
+        864
       ],
-      "id": "1fe1dfa8-bfad-40e4-ad75-92b67d0efd16",
-      "name": "Edit Fields"
+      "id": "e2332877-2ca5-40ca-851f-7b3ba7b0b0e7",
+      "name": "Error message",
+      "webhookId": "c6f632d5-468e-4281-bbdf-bafed7e16181",
+      "credentials": {
+        "telegramApi": {
+          "id": "R6pSyertWWs11XEK",
+          "name": "Telegram_Token"
+        }
+      }
     }
   ],
   "connections": {
@@ -1129,7 +652,7 @@
         ],
         [
           {
-            "node": "Error Message",
+            "node": "Error message",
             "type": "main",
             "index": 0
           }
@@ -1147,36 +670,7 @@
         ],
         [
           {
-            "node": "Error Message",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Merge Streams": {
-      "main": [
-        [
-          {
-            "node": "Get Brain Prompts",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Get Profile UUID": {
-      "main": [
-        [
-          {
-            "node": "Check Exact Duplicate",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Error Message",
+            "node": "Error message",
             "type": "main",
             "index": 0
           }
@@ -1209,14 +703,14 @@
       "main": [
         [
           {
-            "node": "Send Proposal and Buttons",
+            "node": "Send a text message",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Error Message",
+            "node": "Error message",
             "type": "main",
             "index": 0
           }
@@ -1228,11 +722,6 @@
         [
           {
             "node": "MindOps Brain (LLM)",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Edit Fields",
             "type": "main",
             "index": 0
           }
@@ -1250,82 +739,11 @@
         ]
       ]
     },
-    "Send Proposal and Buttons": {
-      "main": [
-        []
-      ]
-    },
-    "Check Exact Duplicate": {
-      "main": [
-        [
-          {
-            "node": "Is Duplicate?",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Error Message",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Is Duplicate?": {
-      "main": [
-        [
-          {
-            "node": "Is Status PROPOSED?",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Generate Embeddings",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Is Status PROPOSED?": {
-      "main": [
-        [
-          {
-            "node": "Prepare Keyboard: Mission",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Send Duplicate Alert",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Send Duplicate Alert": {
-      "main": [
-        []
-      ]
-    },
-    "Get Brain Prompts": {
+    "Merge Streams": {
       "main": [
         [
           {
             "node": "Select Localized Prompt",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Error Message",
             "type": "main",
             "index": 0
           }
@@ -1336,23 +754,7 @@
       "main": [
         [
           {
-            "node": "Get Profile UUID",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Send: Cached Proposal + Buttons": {
-      "main": [
-        []
-      ]
-    },
-    "Prepare Keyboard: Mission": {
-      "main": [
-        [
-          {
-            "node": "Send: Cached Proposal + Buttons",
+            "node": "Generate Embeddings",
             "type": "main",
             "index": 0
           }
@@ -1374,9 +776,9 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "96a745b5-aa03-4ae5-b72f-9ed0cf6566d3",
-  "activeVersionId": "149e701f-3a07-473a-a3bd-825c770ea61a",
-  "versionCounter": 694,
+  "versionId": "352a3f22-1a34-4226-8fd6-d2626383fece",
+  "activeVersionId": "352a3f22-1a34-4226-8fd6-d2626383fece",
+  "versionCounter": 1015,
   "triggerCount": 0,
   "shared": [
     {
@@ -1399,9 +801,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-03-16T00:43:48.885Z",
-    "createdAt": "2026-03-16T00:43:11.617Z",
-    "versionId": "149e701f-3a07-473a-a3bd-825c770ea61a",
+    "updatedAt": "2026-04-06T18:13:30.162Z",
+    "createdAt": "2026-04-06T18:13:08.948Z",
+    "versionId": "352a3f22-1a34-4226-8fd6-d2626383fece",
     "workflowId": "zc8E5ZfPENEx6Css",
     "nodes": [
       {
@@ -1409,10 +811,10 @@
           "workflowInputs": {
             "values": [
               {
-                "name": "telegram_id"
+                "name": "chat_id"
               },
               {
-                "name": "chat_id"
+                "name": "telegram_id"
               },
               {
                 "name": "input_text"
@@ -1423,6 +825,10 @@
               },
               {
                 "name": "file_id"
+              },
+              {
+                "name": "is_button",
+                "type": "boolean"
               },
               {
                 "name": "context",
@@ -1560,7 +966,7 @@
       {
         "parameters": {},
         "type": "n8n-nodes-base.merge",
-        "typeVersion": 3,
+        "typeVersion": 3.2,
         "position": [
           272,
           0
@@ -1591,8 +997,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.1,
         "position": [
-          2000,
-          -48
+          1056,
+          -32
         ],
         "id": "b298b5bc-2a45-4e49-8698-864a1eaeb490",
         "name": "Generate Embeddings",
@@ -1636,8 +1042,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.1,
         "position": [
-          2256,
-          -64
+          1344,
+          -176
         ],
         "id": "e344d54b-fdfb-4717-aea7-7b0cfca2e40f",
         "name": "Query RAG (Supabase)",
@@ -1652,61 +1058,28 @@
       },
       {
         "parameters": {
-          "jsCode": "const items = $input.all();\n\n// 1. Extract memories from RAG\nconst memories = items\n  .map(item => item.json.content || item.json.raw_content)\n  .filter(c => c && c.trim() !== \"\")\n  .join(' | ');\n\n// 2. Get current thought and embedding vector\nconst currentThought = $('Merge Streams').item.json.final_thought;\nconst currentVector = $('Generate Embeddings').item.json.embedding.values;\n\n// 3. Get localized prompt and inject user data\nconst lang = $('Strict Entry (Brain)').item.json.context.language || 'es';\nconst promptData = $('Get Brain Prompts').first().json;\nlet fullPrompt = promptData[lang] || \"\";\n\n// 4. Replace placeholders now that we have all the data\nconst historical = memories || \"No previous history.\";\nfullPrompt = fullPrompt.replace('{{historical_context}}', historical);\nfullPrompt = fullPrompt.replace('{{user_thought}}', currentThought);\n\nreturn [{\n  json: {\n    final_thought: currentThought,\n    historical_context: historical,\n    embedding_vector: currentVector,\n    final_prompt: fullPrompt\n  }\n}];"
+          "jsCode": "const items = $input.all();\n\nconst memories = items\n  .map(item => item.json.content || item.json.raw_content)\n  .filter(c => c && c.trim() !== \"\")\n  .join(' | ');\n\nconst currentThought = $('Merge Streams').item.json.final_thought;\nconst currentVector = $('Generate Embeddings').item.json.embedding.values;\n\nlet fullPrompt = $('Select Localized Prompt').item.json.final_prompt || \"\";\n\n\nconst historical = memories || \"No previous history.\";\nfullPrompt = fullPrompt.replace('{{historical_context}}', historical);\nfullPrompt = fullPrompt.replace('{{user_thought}}', currentThought);\n\nreturn [{\n  json: {\n    final_thought: currentThought,\n    historical_context: historical,\n    embedding_vector: currentVector,\n    final_prompt: fullPrompt\n  }\n}];\n"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2576,
-          -80
+          1680,
+          -192
         ],
         "id": "7ac07056-ae5b-4d7f-8eba-f7a496f214a8",
         "name": "Format Memory Context"
       },
       {
         "parameters": {
-          "url": "=https://rncmxbvrxglbdcagiltc.supabase.co/rest/v1/profiles?telegram_id=eq.{{ $('Strict Entry (Brain)').item.json.telegram_id }}&select=id",
-          "authentication": "predefinedCredentialType",
-          "nodeCredentialType": "httpMultipleHeadersAuth",
-          "sendHeaders": true,
-          "headerParameters": {
-            "parameters": [
-              {
-                "name": "Accept-Profile",
-                "value": "mindops"
-              }
-            ]
-          },
-          "options": {}
-        },
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.1,
-        "position": [
-          1024,
-          -80
-        ],
-        "id": "09d58e07-9644-4a85-95a3-f0a7b9aa6735",
-        "name": "Get Profile UUID",
-        "alwaysOutputData": true,
-        "credentials": {
-          "httpMultipleHeadersAuth": {
-            "id": "9KY2AHXMXRxyjGim",
-            "name": "Supabase"
-          }
-        },
-        "onError": "continueErrorOutput"
-      },
-      {
-        "parameters": {
           "promptType": "define",
-          "text": "={{ $node[\"Select Localized Prompt\"].json.final_prompt }}",
+          "text": "={{ $('Format Memory Context').item.json.final_prompt }}",
           "hasOutputParser": true
         },
         "type": "@n8n/n8n-nodes-langchain.chainLlm",
         "typeVersion": 1.4,
         "position": [
-          3024,
-          -112
+          1952,
+          -128
         ],
         "id": "a9cf4a7a-8174-4a0d-b145-1099c9a57f5b",
         "name": "MindOps Brain (LLM)"
@@ -1716,10 +1089,10 @@
           "jsonSchemaExample": "{\n  \"summary_title\": \"string (3 words)\",\n  \"friction_tag\": \"🔴 CRITICAL (Stall) | 🟡 DENSE (Choppy) | 🟢 FLUID (Flow)\",\n  \"friction_score\": 90,\n  \"system_mode\": \"PROTECTION | EXECUTION\",\n  \"strategic_insight\": \"string (Contextual analysis based on RAG)\",\n  \"voice_script\": \"string (Max 45 words script to be spoken by Twilio if the user gets stuck)\",\n  \"action_plan\": [\n    {\n      \"time\": \"string (Suggested time)\",\n      \"task\": \"string (Atomic physical step < 5 min)\"\n    }\n  ]\n}"
         },
         "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
-        "typeVersion": 1.2,
+        "typeVersion": 1.3,
         "position": [
-          3200,
-          224
+          2112,
+          208
         ],
         "id": "8fcf49e7-8fa5-4546-ba80-e9abda263c2a",
         "name": "JSON Schema Parser"
@@ -1727,7 +1100,7 @@
       {
         "parameters": {
           "method": "POST",
-          "url": "=https://rncmxbvrxglbdcagiltc.supabase.co/rest/v1/thoughts",
+          "url": "https://rncmxbvrxglbdcagiltc.supabase.co/rest/v1/thoughts",
           "authentication": "predefinedCredentialType",
           "nodeCredentialType": "httpMultipleHeadersAuth",
           "sendHeaders": true,
@@ -1738,8 +1111,8 @@
                 "value": "mindops"
               },
               {
-                "name": "Prefer",
-                "value": "return=representation"
+                "name": "Accept-Profile",
+                "value": "mindops"
               }
             ]
           },
@@ -1748,7 +1121,7 @@
             "parameters": [
               {
                 "name": "user_id",
-                "value": "={{ $('Get Profile UUID').first().json.id }}"
+                "value": "={{ $('Strict Entry (Brain)').item.json.context.user.id }}"
               },
               {
                 "name": "summary_title",
@@ -1787,7 +1160,7 @@
                 "value": "={{ $('Format Memory Context').first().json.embedding_vector }}"
               },
               {
-                "name": "=raw_content",
+                "name": "raw_content",
                 "value": "={{ $('Format Memory Context').first().json.final_thought }}"
               }
             ]
@@ -1797,8 +1170,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.1,
         "position": [
-          3616,
-          -16
+          2544,
+          -96
         ],
         "id": "cfcdc020-f16d-4a1f-b49a-c228c2da73a5",
         "name": "Save PROPOSED Mission",
@@ -1818,8 +1191,8 @@
         "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
         "typeVersion": 1,
         "position": [
-          3008,
-          192
+          1936,
+          224
         ],
         "id": "8b14863b-6a59-42bc-abf2-1a8141cf171f",
         "name": "Google Gemini Chat Model",
@@ -1829,440 +1202,6 @@
             "name": "Google Gemini(PaLM) Api account"
           }
         }
-      },
-      {
-        "parameters": {
-          "workflowId": {
-            "__rl": true,
-            "value": "zZYZA8aKwUckaap4",
-            "mode": "list",
-            "cachedResultUrl": "/workflow/zZYZA8aKwUckaap4",
-            "cachedResultName": "SW-5:Message telegram"
-          },
-          "workflowInputs": {
-            "mappingMode": "defineBelow",
-            "value": {
-              "chat_id": "={{ $('Strict Entry (Brain)').item.json.chat_id }}",
-              "text": "={{ \n  $('Strict Entry (Brain)').item.json.context.translations.message_proposal\n    .replace('{friction_tag}', $('MindOps Brain (LLM)').item.json.output.friction_tag)\n    .replace('{strategic_insight}', $('MindOps Brain (LLM)').item.json.output.strategic_insight)\n    .replace('{action_plan}', $('MindOps Brain (LLM)').item.json.output.action_plan.map(p => \"🕒 \" + p.time + \" | \" + p.task).join('\\n'))\n}}",
-              "markup_type": "inlineKeyboard",
-              "keyboard_data": "={{ [[\n  { \"text\": $('Strict Entry (Brain)').item.json.context.translations.btn_mission_activate, \"callback_data\": \"plan_ok\" },\n  { \"text\": $('Strict Entry (Brain)').item.json.context.translations.btn_mission_readjust, \"callback_data\": \"plan_error\" }\n]] }}"
-            },
-            "matchingColumns": [],
-            "schema": [
-              {
-                "id": "chat_id",
-                "displayName": "chat_id",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string",
-                "removed": false
-              },
-              {
-                "id": "text",
-                "displayName": "text",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string",
-                "removed": false
-              },
-              {
-                "id": "markup_type",
-                "displayName": "markup_type",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string",
-                "removed": false
-              },
-              {
-                "id": "message_id",
-                "displayName": "message_id",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string",
-                "removed": true
-              },
-              {
-                "id": "keyboard_data",
-                "displayName": "keyboard_data",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "array",
-                "removed": false
-              }
-            ],
-            "attemptToConvertTypes": false,
-            "convertFieldsToString": true
-          },
-          "options": {}
-        },
-        "type": "n8n-nodes-base.executeWorkflow",
-        "typeVersion": 1.3,
-        "position": [
-          4128,
-          -48
-        ],
-        "id": "c48047db-6ca4-4d65-b36b-bef793578c7a",
-        "name": "Send Proposal and Buttons"
-      },
-      {
-        "parameters": {
-          "workflowId": {
-            "__rl": true,
-            "value": "zZYZA8aKwUckaap4",
-            "mode": "list",
-            "cachedResultUrl": "/workflow/zZYZA8aKwUckaap4",
-            "cachedResultName": "SW-5:Message telegram"
-          },
-          "workflowInputs": {
-            "mappingMode": "defineBelow",
-            "value": {
-              "chat_id": "={{ $('Strict Entry (Brain)').item.json.chat_id }}",
-              "text": "={{ $('Strict Entry (Brain)').item.json.context.translations.error_message_mission }}"
-            },
-            "matchingColumns": [],
-            "schema": [
-              {
-                "id": "chat_id",
-                "displayName": "chat_id",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string"
-              },
-              {
-                "id": "text",
-                "displayName": "text",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string"
-              },
-              {
-                "id": "markup_type",
-                "displayName": "markup_type",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string",
-                "removed": true
-              },
-              {
-                "id": "message_id",
-                "displayName": "message_id",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string",
-                "removed": true
-              }
-            ],
-            "attemptToConvertTypes": false,
-            "convertFieldsToString": true
-          },
-          "options": {}
-        },
-        "type": "n8n-nodes-base.executeWorkflow",
-        "typeVersion": 1.3,
-        "position": [
-          1904,
-          848
-        ],
-        "id": "fc5fdb13-04f3-45bc-af45-2c6f11ad1fef",
-        "name": "Error Message"
-      },
-      {
-        "parameters": {
-          "method": "POST",
-          "url": "https://rncmxbvrxglbdcagiltc.supabase.co/rest/v1/rpc/is_duplicate_thought",
-          "authentication": "predefinedCredentialType",
-          "nodeCredentialType": "httpMultipleHeadersAuth",
-          "sendHeaders": true,
-          "headerParameters": {
-            "parameters": [
-              {
-                "name": "Content-Profile",
-                "value": "mindops"
-              },
-              {
-                "name": "Accept-Profile",
-                "value": "mindops"
-              }
-            ]
-          },
-          "sendBody": true,
-          "specifyBody": "json",
-          "jsonBody": "={\n  \"p_user_id\": \"{{ $json.id }}\",\n  \"p_text\": \"{{ $('Merge Streams').item.json.final_thought }}\"\n}",
-          "options": {}
-        },
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.4,
-        "position": [
-          1264,
-          -304
-        ],
-        "id": "c603e84d-f24b-45ef-bf4f-97219f349d23",
-        "name": "Check Exact Duplicate",
-        "alwaysOutputData": true,
-        "credentials": {
-          "httpMultipleHeadersAuth": {
-            "id": "9KY2AHXMXRxyjGim",
-            "name": "Supabase"
-          }
-        },
-        "onError": "continueErrorOutput"
-      },
-      {
-        "parameters": {
-          "conditions": {
-            "options": {
-              "caseSensitive": true,
-              "leftValue": "",
-              "typeValidation": "strict",
-              "version": 3
-            },
-            "conditions": [
-              {
-                "id": "9f0eb4da-d696-4891-9237-c9f87218bd76",
-                "leftValue": "={{ $json.is_duplicate }}",
-                "rightValue": "",
-                "operator": {
-                  "type": "boolean",
-                  "operation": "true",
-                  "singleValue": true
-                }
-              }
-            ],
-            "combinator": "and"
-          },
-          "options": {}
-        },
-        "type": "n8n-nodes-base.if",
-        "typeVersion": 2.3,
-        "position": [
-          1632,
-          -320
-        ],
-        "id": "b7fd381b-16e0-4049-843b-58361a4c10ea",
-        "name": "Is Duplicate?"
-      },
-      {
-        "parameters": {
-          "conditions": {
-            "options": {
-              "caseSensitive": true,
-              "leftValue": "",
-              "typeValidation": "strict",
-              "version": 3
-            },
-            "conditions": [
-              {
-                "id": "0ebb4b7c-97da-4a22-98b4-c2909388de9b",
-                "leftValue": "={{ $json.old_status }}",
-                "rightValue": "PROPOSED",
-                "operator": {
-                  "type": "string",
-                  "operation": "equals",
-                  "name": "filter.operator.equals"
-                }
-              }
-            ],
-            "combinator": "and"
-          },
-          "options": {}
-        },
-        "type": "n8n-nodes-base.if",
-        "typeVersion": 2.3,
-        "position": [
-          2112,
-          -368
-        ],
-        "id": "51c5b090-8dfa-4a34-87ab-1501d18c2bfc",
-        "name": "Is Status PROPOSED?"
-      },
-      {
-        "parameters": {
-          "workflowId": {
-            "__rl": true,
-            "value": "zZYZA8aKwUckaap4",
-            "mode": "list",
-            "cachedResultUrl": "/workflow/zZYZA8aKwUckaap4",
-            "cachedResultName": "SW-5:Message telegram"
-          },
-          "workflowInputs": {
-            "mappingMode": "defineBelow",
-            "value": {
-              "chat_id": "={{ $('Strict Entry (Brain)').item.json.chat_id }}",
-              "text": "={{ \n  $('Strict Entry (Brain)').item.json.context.translations.cache_proposal\n    .replace('{old_summary_title}', $json.old_summary_title)\n    .replace('{old_strategic_insight}', $json.old_strategic_insight)\n    .replace('{old_action_plan}', $json.old_action_plan.map(p => \"🕒 \" + p.time + \" | \" + p.task).join('\\n'))\n}}\n",
-              "markup_type": "inlineKeyboard",
-              "keyboard_data": "={{ $json.keyboard }}"
-            },
-            "matchingColumns": [],
-            "schema": [
-              {
-                "id": "chat_id",
-                "displayName": "chat_id",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string",
-                "removed": false
-              },
-              {
-                "id": "text",
-                "displayName": "text",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string",
-                "removed": false
-              },
-              {
-                "id": "markup_type",
-                "displayName": "markup_type",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string",
-                "removed": false
-              },
-              {
-                "id": "message_id",
-                "displayName": "message_id",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string",
-                "removed": true
-              },
-              {
-                "id": "keyboard_data",
-                "displayName": "keyboard_data",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "array",
-                "removed": false
-              }
-            ],
-            "attemptToConvertTypes": false,
-            "convertFieldsToString": true
-          },
-          "options": {}
-        },
-        "type": "n8n-nodes-base.executeWorkflow",
-        "typeVersion": 1.3,
-        "position": [
-          2768,
-          -528
-        ],
-        "id": "419653ca-d331-4b9e-b9c5-ce2d705b81ae",
-        "name": "Send: Cached Proposal + Buttons"
-      },
-      {
-        "parameters": {
-          "workflowId": {
-            "__rl": true,
-            "value": "zZYZA8aKwUckaap4",
-            "mode": "list",
-            "cachedResultUrl": "/workflow/zZYZA8aKwUckaap4",
-            "cachedResultName": "SW-5:Message telegram"
-          },
-          "workflowInputs": {
-            "mappingMode": "defineBelow",
-            "value": {
-              "chat_id": "={{ $('Strict Entry (Brain)').item.json.chat_id }}",
-              "text": "={{ \n  $('Strict Entry (Brain)').item.json.context.translations.duplicate_alert\n    .replace('{old_summary_title}', $json.old_summary_title)\n    .replace('{old_strategic_insight}', $json.old_strategic_insight)\n    .replace('{old_action_plan}', $json.old_action_plan.map(p => \"🕒 \" + p.time + \" | \" + p.task).join('\\n'))\n}}\n"
-            },
-            "matchingColumns": [],
-            "schema": [
-              {
-                "id": "chat_id",
-                "displayName": "chat_id",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string",
-                "removed": false
-              },
-              {
-                "id": "text",
-                "displayName": "text",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string",
-                "removed": false
-              },
-              {
-                "id": "markup_type",
-                "displayName": "markup_type",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string",
-                "removed": true
-              },
-              {
-                "id": "message_id",
-                "displayName": "message_id",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "canBeUsedToMatch": true,
-                "type": "string",
-                "removed": true
-              }
-            ],
-            "attemptToConvertTypes": false,
-            "convertFieldsToString": true
-          },
-          "options": {}
-        },
-        "type": "n8n-nodes-base.executeWorkflow",
-        "typeVersion": 1.3,
-        "position": [
-          2784,
-          -304
-        ],
-        "id": "cfdf11b2-2c70-4cef-a094-090870e803a0",
-        "name": "Send Duplicate Alert"
-      },
-      {
-        "parameters": {
-          "content": "## Description\nMindOps Brain Core: This engine processes voice logs into structured data. It performs AI-driven cognitive analysis, detects recurring thoughts, and delivers localized outcome-based action plans.",
-          "height": 192,
-          "width": 832
-        },
-        "type": "n8n-nodes-base.stickyNote",
-        "position": [
-          -80,
-          -768
-        ],
-        "typeVersion": 1,
-        "id": "faa1a67f-b289-4225-833d-348b2dcb7f06",
-        "name": "Sticky Note"
       },
       {
         "parameters": {
@@ -2284,7 +1223,7 @@
         "parameters": {
           "content": "## PREPARE (Transcription & Prompts)",
           "height": 704,
-          "width": 1216,
+          "width": 1056,
           "color": 5
         },
         "type": "n8n-nodes-base.stickyNote",
@@ -2298,22 +1237,6 @@
       },
       {
         "parameters": {
-          "content": "## IDENTIFY (User & Duplicates)",
-          "height": 800,
-          "width": 912,
-          "color": 6
-        },
-        "type": "n8n-nodes-base.stickyNote",
-        "position": [
-          976,
-          -496
-        ],
-        "typeVersion": 1,
-        "id": "c610cef6-c78c-4fda-b0e4-4947a0e690cc",
-        "name": "Sticky Note3"
-      },
-      {
-        "parameters": {
           "content": "## THINK (AI & Memory)",
           "height": 1056,
           "width": 1424,
@@ -2321,8 +1244,8 @@
         },
         "type": "n8n-nodes-base.stickyNote",
         "position": [
-          1936,
-          -592
+          848,
+          -544
         ],
         "typeVersion": 1,
         "id": "24c94226-9ef4-461a-a6ec-defb231d8210",
@@ -2337,8 +1260,8 @@
         },
         "type": "n8n-nodes-base.stickyNote",
         "position": [
-          3536,
-          -320
+          2384,
+          -384
         ],
         "typeVersion": 1,
         "id": "d869c279-fbba-4e96-8cd8-06581448b2ea",
@@ -2353,8 +1276,8 @@
         },
         "type": "n8n-nodes-base.stickyNote",
         "position": [
-          1856,
-          672
+          2064,
+          752
         ],
         "typeVersion": 1,
         "id": "7d1994d0-635e-480c-bae1-9104f7133bce",
@@ -2362,98 +1285,85 @@
       },
       {
         "parameters": {
-          "url": "https://rncmxbvrxglbdcagiltc.supabase.co/rest/v1/prompts?key=eq.prompt_ai&select=es,en",
-          "authentication": "predefinedCredentialType",
-          "nodeCredentialType": "httpMultipleHeadersAuth",
-          "sendHeaders": true,
-          "headerParameters": {
-            "parameters": [
-              {
-                "name": "Content-Profile",
-                "value": "mindops"
-              },
-              {
-                "name": "Accept-Profile",
-                "value": "mindops"
-              }
-            ]
-          },
-          "options": {}
-        },
-        "type": "n8n-nodes-base.httpRequest",
-        "typeVersion": 4.4,
-        "position": [
-          480,
-          -16
-        ],
-        "id": "70b06d79-1123-4852-8859-3cd8deba898d",
-        "name": "Get Brain Prompts",
-        "credentials": {
-          "httpMultipleHeadersAuth": {
-            "id": "9KY2AHXMXRxyjGim",
-            "name": "Supabase"
-          }
-        },
-        "onError": "continueErrorOutput"
-      },
-      {
-        "parameters": {
-          "jsCode": "const lang = $('Strict Entry (Brain)').item.json.context.language || 'es';\n\nconst promptData = $input.first().json;\nlet fullPrompt = promptData[lang] || \"\";\n\n// Estos se inyectarán después — por ahora dejamos placeholders\n// El reemplazo real ocurre en Format Memory Context\nreturn [{\n  json: {\n    final_prompt: fullPrompt,\n    debug_language: lang\n  }\n}];"
+          "jsCode": "\nconst context = $('Strict Entry (Brain)').item.json.context;\n\n\nconst lang = context.language || 'es';\n\n\nconst promptData = context.prompts.prompt_ai || {};\nconst fullPrompt = promptData[lang] || \"\";\n\nreturn [{\n  json: {\n    final_prompt: fullPrompt,\n    debug_language: lang\n  }\n}];\n"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          800,
-          -112
+          512,
+          -32
         ],
         "id": "e6fae0f9-5d0d-4674-b9bd-eaa842f62d50",
         "name": "Select Localized Prompt"
       },
       {
         "parameters": {
-          "assignments": {
-            "assignments": [
+          "chatId": "={{ $('Strict Entry (Brain)').item.json.chat_id }}",
+          "text": "={{ \n  $('Strict Entry (Brain)').item.json.context.translations.message_proposal\n    .replace('{friction_tag}', $('MindOps Brain (LLM)').item.json.output.friction_tag)\n    .replace('{strategic_insight}', $('MindOps Brain (LLM)').item.json.output.strategic_insight)\n    .replace('{action_plan}', $('MindOps Brain (LLM)').item.json.output.action_plan.map(p => \"🕒 \" + p.time + \" | \" + p.task).join('\\n'))\n}}",
+          "replyMarkup": "inlineKeyboard",
+          "inlineKeyboard": {
+            "rows": [
               {
-                "id": "ced6f3d6-f414-433f-80e0-d3a843e6a2b5",
-                "name": "keyboard_data",
-                "value": "={{ JSON.stringify([[   { \"text\": $('Strict Entry (Brain)').item.json.context.translations.btn_mission_activate, \"callback_data\": \"plan_ok\" },   { \"text\": $('Strict Entry (Brain)').item.json.context.translations.btn_mission_readjust, \"callback_data\": \"plan_error\" } ]]) }}",
-                "type": "string"
+                "row": {
+                  "buttons": [
+                    {
+                      "text": "={{  $('Strict Entry (Brain)').item.json.context.translations.btn_mission_activate }}",
+                      "additionalFields": {
+                        "callback_data": "plan_ok"
+                      }
+                    },
+                    {
+                      "text": "={{$('Strict Entry (Brain)').item.json.context.translations.btn_mission_readjust }}",
+                      "additionalFields": {
+                        "callback_data": "plan_error"
+                      }
+                    }
+                  ]
+                }
               }
             ]
           },
-          "options": {}
+          "additionalFields": {
+            "appendAttribution": false
+          }
         },
-        "type": "n8n-nodes-base.set",
-        "typeVersion": 3.4,
+        "type": "n8n-nodes-base.telegram",
+        "typeVersion": 1.2,
         "position": [
-          2464,
-          -480
+          2896,
+          -80
         ],
-        "id": "094c3b15-4d70-4032-8d47-b220c482a1cf",
-        "name": "Prepare Keyboard: Mission"
+        "id": "dd601e3f-5f4f-4ad1-88ae-23a9fef43591",
+        "name": "Send a text message",
+        "webhookId": "808a3162-1e80-4d0d-b02a-b3f385f593c3",
+        "credentials": {
+          "telegramApi": {
+            "id": "R6pSyertWWs11XEK",
+            "name": "Telegram_Token"
+          }
+        }
       },
       {
         "parameters": {
-          "assignments": {
-            "assignments": [
-              {
-                "id": "12e40e02-93c1-4e86-907d-f3003bb5c4a3",
-                "name": "",
-                "value": "",
-                "type": "string"
-              }
-            ]
-          },
-          "options": {}
+          "chatId": "={{ $('Strict Entry (Brain)').item.json.chat_id }}",
+          "text": "={{ $('Strict Entry (Brain)').item.json.context.translations.error_message_mission }}",
+          "additionalFields": {}
         },
-        "type": "n8n-nodes-base.set",
-        "typeVersion": 3.4,
+        "type": "n8n-nodes-base.telegram",
+        "typeVersion": 1.2,
         "position": [
-          2784,
-          -80
+          2208,
+          864
         ],
-        "id": "1fe1dfa8-bfad-40e4-ad75-92b67d0efd16",
-        "name": "Edit Fields"
+        "id": "e2332877-2ca5-40ca-851f-7b3ba7b0b0e7",
+        "name": "Error message",
+        "webhookId": "c6f632d5-468e-4281-bbdf-bafed7e16181",
+        "credentials": {
+          "telegramApi": {
+            "id": "R6pSyertWWs11XEK",
+            "name": "Telegram_Token"
+          }
+        }
       }
     ],
     "connections": {
@@ -2541,7 +1451,7 @@
           ],
           [
             {
-              "node": "Error Message",
+              "node": "Error message",
               "type": "main",
               "index": 0
             }
@@ -2559,36 +1469,7 @@
           ],
           [
             {
-              "node": "Error Message",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Merge Streams": {
-        "main": [
-          [
-            {
-              "node": "Get Brain Prompts",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Get Profile UUID": {
-        "main": [
-          [
-            {
-              "node": "Check Exact Duplicate",
-              "type": "main",
-              "index": 0
-            }
-          ],
-          [
-            {
-              "node": "Error Message",
+              "node": "Error message",
               "type": "main",
               "index": 0
             }
@@ -2621,14 +1502,14 @@
         "main": [
           [
             {
-              "node": "Send Proposal and Buttons",
+              "node": "Send a text message",
               "type": "main",
               "index": 0
             }
           ],
           [
             {
-              "node": "Error Message",
+              "node": "Error message",
               "type": "main",
               "index": 0
             }
@@ -2640,11 +1521,6 @@
           [
             {
               "node": "MindOps Brain (LLM)",
-              "type": "main",
-              "index": 0
-            },
-            {
-              "node": "Edit Fields",
               "type": "main",
               "index": 0
             }
@@ -2662,82 +1538,11 @@
           ]
         ]
       },
-      "Send Proposal and Buttons": {
-        "main": [
-          []
-        ]
-      },
-      "Check Exact Duplicate": {
-        "main": [
-          [
-            {
-              "node": "Is Duplicate?",
-              "type": "main",
-              "index": 0
-            }
-          ],
-          [
-            {
-              "node": "Error Message",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Is Duplicate?": {
-        "main": [
-          [
-            {
-              "node": "Is Status PROPOSED?",
-              "type": "main",
-              "index": 0
-            }
-          ],
-          [
-            {
-              "node": "Generate Embeddings",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Is Status PROPOSED?": {
-        "main": [
-          [
-            {
-              "node": "Prepare Keyboard: Mission",
-              "type": "main",
-              "index": 0
-            }
-          ],
-          [
-            {
-              "node": "Send Duplicate Alert",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Send Duplicate Alert": {
-        "main": [
-          []
-        ]
-      },
-      "Get Brain Prompts": {
+      "Merge Streams": {
         "main": [
           [
             {
               "node": "Select Localized Prompt",
-              "type": "main",
-              "index": 0
-            }
-          ],
-          [
-            {
-              "node": "Error Message",
               "type": "main",
               "index": 0
             }
@@ -2748,23 +1553,7 @@
         "main": [
           [
             {
-              "node": "Get Profile UUID",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Send: Cached Proposal + Buttons": {
-        "main": [
-          []
-        ]
-      },
-      "Prepare Keyboard: Mission": {
-        "main": [
-          [
-            {
-              "node": "Send: Cached Proposal + Buttons",
+              "node": "Generate Embeddings",
               "type": "main",
               "index": 0
             }
@@ -2773,15 +1562,15 @@
       }
     },
     "authors": "Alejandra Ocampo",
-    "name": "Version 149e701f",
+    "name": "Version 352a3f22",
     "description": "",
     "autosaved": true,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-03-16T00:43:48.841Z",
-        "id": 267,
+        "createdAt": "2026-04-06T18:13:30.119Z",
+        "id": 750,
         "workflowId": "zc8E5ZfPENEx6Css",
-        "versionId": "149e701f-3a07-473a-a3bd-825c770ea61a",
+        "versionId": "352a3f22-1a34-4226-8fd6-d2626383fece",
         "event": "activated",
         "userId": "fae80fe0-db88-411b-b8e7-f61d64004d4e"
       }
