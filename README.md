@@ -63,6 +63,25 @@ _(For a detailed breakdown of the hosting decisions, the execution model, and wh
 
 ---
 
+## ⚠️ High Priority Roadmap: UX & AI Clarity
+
+### 1. Transparent Model Execution
+
+Currently, the documentation refers to the reasoning engine generically as an "LLM." To provide technical clarity for developers:
+
+- **Core Model:** **Google Gemini 1.5 Flash** (orchestrated via `n8n`).
+- **Base Prompting:** The orchestrator injects strict JSON schema rules, limiting the model's output to format-compliant deterministic actions.
+- **RAG Context Injection:** Unstructured data is vectorized via `pgvector`. During execution, the pipeline retrieves the closest embeddings (historical user context) and passes them into the prompt's context window.
+
+### 2. Honest AI Pipeline Visualization
+
+_Note: The current Mermaid diagram will soon be replaced with a high-fidelity visual architecture image to improve rendering and cognitive load._
+
+The literal execution pipeline follows this strict flow (understandable in 10 seconds):
+**Telegram** ➔ **n8n (Orchestrator)** ➔ **RAG (Supabase Vector)** ➔ **Gemini 1.5 Flash** ➔ **Supabase (State Update)** ➔ **Next.js Dashboard**
+
+---
+
 ## 💻 Local Setup (For Developers)
 
 Want to spin up your own cognitive engine?
