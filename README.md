@@ -2,6 +2,8 @@
 
 ![MindOps Dashboard](public/assets/hero-dashboard.png)
 
+[![MindOps Demo](https://cdn.loom.com/sessions/thumbnails/576864a5d3e24391861ec4ef1cce345e-with-play.gif)](https://www.loom.com/share/576864a5d3e24391861ec4ef1cce345e)
+
 MindOps is an **event-driven, multi-agent cognitive processor**. It's designed to take unstructured mental noise (rants, anxieties, chaotic thoughts) and compile it into deterministic, prioritized action plans. Think of it as a load balancer for your brain's working memory.
 
 ---
