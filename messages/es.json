@@ -120,6 +120,14 @@
       "step": "Paso {number}",
       "completedSoon": "Misión completada pronto",
       "releaseLoad": "LIBERAR CARGA"
+    },
+    "resilienceDesc": {
+      "pending": "Inicia tu primera sesión para aprender tu ritmo.",
+      "learning": "Estamos aprendiendo tus ritmos para darte mejores insights.",
+      "improved": "Tu capacidad de recuperación mejoró un {delta}% este mes.",
+      "fatigue": "Notamos acumulación de fatiga. Considera una pausa activa.",
+      "fluid": "Mantienes una carga cognitiva baja y fluida.",
+      "stable": "Tu nivel de calma se mantiene estable."
     }
   },
   "Auth": {

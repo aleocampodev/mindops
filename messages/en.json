@@ -120,6 +120,14 @@
       "step": "Step {number}",
       "completedSoon": "Mission completed soon",
       "releaseLoad": "RELEASE LOAD"
+    },
+    "resilienceDesc": {
+      "pending": "Start your first session so we can begin learning your rhythm.",
+      "learning": "We are learning from your rhythms to give you better insights.",
+      "improved": "Your recovery capacity has improved by {delta}% this month.",
+      "fatigue": "We noticed you may be accumulating fatigue. Consider an active pause.",
+      "fluid": "You maintain a low, fluid cognitive load.",
+      "stable": "Your calm level remains stable."
     }
   },
   "Auth": {

@@ -1,68 +1,82 @@
-import { createClient } from '@/utils/supabase/server';
-import { redirect } from 'next/navigation';
-import { getTranslations } from 'next-intl/server';
-import { DashboardHeader } from '@/components/dashboard/Header';
-import { PerspectiveCard } from '@/components/dashboard/PerspectiveCard';
-import { ThoughtGallery } from '@/components/dashboard/ThoughtGallery';
-import { QuickStats } from '@/components/dashboard/QuickStats';
-import { MissionSidebar } from '@/components/dashboard/MissionSidebar';
-import { FrictionHero } from '@/components/dashboard/FrictionHero';
-import { WeeklySummary } from '@/components/dashboard/WeeklySummary';
-import { calculateResilienceMetric } from '@/lib/dashboard/analytics';
-import {
-  computeWeeklyAvg,
-  countActiveDays,
-  buildDaySummaries,
-} from '@/lib/dashboard/weekly';
+import { createClient } from '@/utils/supabase/server'
+import { redirect } from 'next/navigation'
+import { getTranslations, getLocale } from 'next-intl/server'
+import { DashboardHeader } from '@/components/dashboard/Header'
+import { PerspectiveCard } from '@/components/dashboard/PerspectiveCard'
+import { ThoughtGallery } from '@/components/dashboard/ThoughtGallery'
+import { QuickStats } from '@/components/dashboard/QuickStats'
+import { MissionSidebar } from '@/components/dashboard/MissionSidebar'
+import { FrictionHero } from '@/components/dashboard/FrictionHero'
+import { WeeklySummary } from '@/components/dashboard/WeeklySummary'
+import { calculateResilienceMetric } from '@/lib/dashboard/analytics'
+import { computeWeeklyAvg, countActiveDays, buildDaySummaries } from '@/lib/dashboard/weekly'
 
 export default async function DashboardPage() {
-  const t = await getTranslations('Dashboard');
-  const supabase = await createClient();
+  const t = await getTranslations('Dashboard')
+  const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
 
   // Parallelize independent queries
   const [profileResult, thoughtsResult] = await Promise.all([
     supabase.schema('mindops').from('profiles').select('*').eq('id', user.id).single(),
-    supabase.schema('mindops').from('thoughts').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
-  ]);
+    supabase
+      .schema('mindops')
+      .from('thoughts')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false }),
+  ])
 
-  const profile = profileResult.data;
-  const thoughts = thoughtsResult.data;
+  const profile = profileResult.data
+  const thoughts = thoughtsResult.data
 
-  const latestThought = thoughts?.[0];
-  const isProteccion = latestThought?.system_mode === 'PROTECTION';
+  const latestThought = thoughts?.[0]
+  const isProteccion = latestThought?.system_mode === 'PROTECTION'
 
-  const currentFriction: number = typeof latestThought?.friction_score === 'number'
-    ? latestThought.friction_score
-    : 0;
+  const currentFriction: number =
+    typeof latestThought?.friction_score === 'number' ? latestThought.friction_score : 0
 
-  if (!profile?.telegram_id || !profile?.phone_number) redirect('/dashboard/pairing');
+  if (!profile?.telegram_id || !profile?.phone_number) redirect('/dashboard/pairing')
+
+  const locale = await getLocale()
 
   // Trend
   const avgFriction = thoughts?.length
-    ? Math.round(thoughts.reduce((s: number, t: { friction_score?: number }) => s + (typeof t.friction_score === 'number' ? t.friction_score : 20), 0) / thoughts.length)
-    : 0;
-  const frictionTrend = thoughts?.length ? currentFriction - avgFriction : 0;
+    ? Math.round(
+        thoughts.reduce(
+          (s: number, t: { friction_score?: number }) =>
+            s + (typeof t.friction_score === 'number' ? t.friction_score : 20),
+          0
+        ) / thoughts.length
+      )
+    : 0
+  const frictionTrend = thoughts?.length ? currentFriction - avgFriction : 0
 
   // Resilience
-  const resilience = calculateResilienceMetric(thoughts || []);
+  const resilience = calculateResilienceMetric(thoughts || [], t)
 
   // Weekly summary data
-  const allThoughts = thoughts || [];
-  const daySummaries = buildDaySummaries(allThoughts);
-  const weeklyAvg = computeWeeklyAvg(allThoughts, 0);
-  const activeDays = countActiveDays(allThoughts, 0);
-  const totalSessions = daySummaries.reduce((sum, d) => sum + d.sessions, 0);
+  const allThoughts = thoughts || []
+  const daySummaries = buildDaySummaries(allThoughts, locale)
+  const weeklyAvg = computeWeeklyAvg(allThoughts, 0)
+  const activeDays = countActiveDays(allThoughts, 0)
+  const totalSessions = daySummaries.reduce((sum, d) => sum + d.sessions, 0)
 
-  const displayName = profile?.first_name || t('partner');
+  const displayName = profile?.first_name || t('partner')
 
   return (
-    <main className={`min-h-screen transition-colors duration-700 ${
-      isProteccion ? 'bg-[var(--color-surface-warm,#FFF8F0)]' : 'bg-[var(--color-surface,#FDFDFF)]'
-    }`}>
-      <div className="max-w-[1440px] mx-auto px-6 md:px-10 pb-16">
+    <main
+      className={`min-h-screen transition-colors duration-700 ${
+        isProteccion
+          ? 'bg-[var(--color-surface-warm,#FFF8F0)]'
+          : 'bg-[var(--color-surface,#FDFDFF)]'
+      }`}
+    >
+      <div className="mx-auto max-w-[1440px] px-6 pb-16 md:px-10">
         <DashboardHeader firstName={displayName} isProteccion={isProteccion} />
 
         {/* Friction Hero — snapshot of now */}
@@ -86,8 +100,8 @@ export default async function DashboardPage() {
         </div>
 
         {/* Main content grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-8">
-          <div className="lg:col-span-4 space-y-6">
+        <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-12">
+          <div className="space-y-6 lg:col-span-4">
             <MissionSidebar
               isProteccion={isProteccion}
               thoughtsCount={thoughts?.length || 0}
@@ -96,7 +110,7 @@ export default async function DashboardPage() {
             />
           </div>
 
-          <div className="lg:col-span-8 space-y-8">
+          <div className="space-y-8 lg:col-span-8">
             <QuickStats thoughts={thoughts || []} resilience={resilience} />
 
             <PerspectiveCard
@@ -109,5 +123,5 @@ export default async function DashboardPage() {
         </div>
       </div>
     </main>
-  );
+  )
 }
